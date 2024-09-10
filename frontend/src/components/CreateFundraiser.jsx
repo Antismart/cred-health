@@ -103,21 +103,6 @@ export default function CreateFundraiser() {
           required
         />
 
-        <Label htmlFor="category">Category</Label>
-        <Select
-          id="category"
-          name="category"
-          value={formData.category}
-          onChange={handleChange}
-          required
-        >
-          <option value="" disabled>Select a category</option>
-          <option value="medical">Medical Expenses</option>
-          <option value="community">Community Project</option>
-          <option value="education">Education</option>
-          <option value="emergency">Emergency Relief</option>
-          <option value="other">Other</option>
-        </Select>
 
         <Label htmlFor="goal">Fundraising Goal ($)</Label>
         <Input

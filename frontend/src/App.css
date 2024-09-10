@@ -38,3 +38,7 @@ html {
 ::-webkit-scrollbar-thumb:hover {
   background: #555; /* Darker shade on hover */
 }
+
+html {
+  scroll-behavior: smooth;
+}

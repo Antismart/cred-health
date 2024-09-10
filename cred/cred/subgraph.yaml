@@ -1,0 +1,41 @@
+specVersion: 1.0.0
+indexerHints:
+  prune: auto
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: HospitalFundraisingPlatform
+    network: base-sepolia
+    source:
+      address: "0x2C4A9f5853f34723B4D83a1976A7482152A2a8D2"
+      abi: HospitalFundraisingPlatform
+      startBlock: 15120417
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - DonationReceived
+        - FundraiserApproved
+        - FundraiserRequested
+        - FundsDisbursed
+        - HospitalRegistered
+        - UserRegistered
+      abis:
+        - name: HospitalFundraisingPlatform
+          file: ./abis/HospitalFundraisingPlatform.json
+      eventHandlers:
+        - event: DonationReceived(indexed uint256,indexed address,uint256)
+          handler: handleDonationReceived
+        - event: FundraiserApproved(indexed uint256)
+          handler: handleFundraiserApproved
+        - event: FundraiserRequested(indexed uint256,indexed address,indexed address,uint256,string)
+          handler: handleFundraiserRequested
+        - event: FundsDisbursed(indexed uint256,indexed address)
+          handler: handleFundsDisbursed
+        - event: HospitalRegistered(indexed address)
+          handler: handleHospitalRegistered
+        - event: UserRegistered(indexed address,uint8)
+          handler: handleUserRegistered
+      file: ./src/hospital-fundraising-platform.ts

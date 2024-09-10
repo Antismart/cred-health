@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity 0.8.24;
 
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-contract CrowdHealth is ReentrancyGuard {
+contract HospitalFundraisingPlatform is ReentrancyGuard {
     address public owner;
 
     struct Hospital {
@@ -19,6 +19,7 @@ contract CrowdHealth is ReentrancyGuard {
         uint256 targetAmount;
         uint256 amountRaised;
         string condition;
+        string description;
         bool completed;
         bool approved;
     }
@@ -46,7 +47,8 @@ contract CrowdHealth is ReentrancyGuard {
         uint256 indexed fundraiserId,
         address indexed patient,
         address indexed hospital,
-        uint256 targetAmount
+        uint256 targetAmount,
+        string description
     );
     event FundraiserApproved(uint256 indexed fundraiserId);
     event FundsDisbursed(uint256 indexed fundraiserId, address indexed hospital);
@@ -91,31 +93,37 @@ contract CrowdHealth is ReentrancyGuard {
         emit UserRegistered(msg.sender, _userType);
     }
 
-    function requestFundraiser(uint256 _targetAmount)
-        external
-        nonReentrant
-        onlyRegisteredUser(msg.sender)
-    {
-        User storage user = users[msg.sender];
-        require(user.userType == UserType.Patient, "Only patients can request fundraisers");
-        require(_targetAmount > 0, "Target amount must be greater than zero");
+function createFundraiser(uint256 _targetAmount, string memory _description) 
+    external 
+    nonReentrant 
+    onlyRegisteredUser(msg.sender) 
+    returns (uint256)
+{
+    User storage user = users[msg.sender];
+    require(user.userType == UserType.Patient, "Only patients can create fundraisers");
+    require(_targetAmount > 0, "Target amount must be greater than zero");
+    require(bytes(_description).length > 0, "Description cannot be empty");
 
-        fundraisers[fundraiserCounter] = Fundraiser(
-            msg.sender,
-            user.hospital,
-            _targetAmount,
-            0,
-            user.condition,
-            false,
-            true // Automatically approve fundraisers for simplicity
-        );
-        patientFundraisers[msg.sender].push(fundraiserCounter);
+    uint256 newFundraiserId = fundraiserCounter;
+    fundraisers[newFundraiserId] = Fundraiser({
+        patient: msg.sender,
+        hospital: user.hospital,
+        targetAmount: _targetAmount,
+        amountRaised: 0,
+        condition: user.condition,
+        description: _description,
+        completed: false,
+        approved: true // Auto-approve for simplicity, but you might want to change this
+    });
 
-        emit FundraiserRequested(fundraiserCounter, msg.sender, user.hospital, _targetAmount);
+    patientFundraisers[msg.sender].push(newFundraiserId);
 
-        fundraiserCounter++;
-    }
+    emit FundraiserRequested(newFundraiserId, msg.sender, user.hospital, _targetAmount, _description);
+    
+    fundraiserCounter++;
 
+    return newFundraiserId;
+}
     function donateToFundraiser(uint256 _fundraiserId) external payable nonReentrant {
         Fundraiser storage fundraiser = fundraisers[_fundraiserId];
         require(fundraiser.approved, "Fundraiser not approved");

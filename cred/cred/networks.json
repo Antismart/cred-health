@@ -1,0 +1,8 @@
+{
+  "base-sepolia": {
+    "HospitalFundraisingPlatform": {
+      "address": "0x2C4A9f5853f34723B4D83a1976A7482152A2a8D2",
+      "startBlock": 15120417
+    }
+  }
+}

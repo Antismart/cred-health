@@ -3,6 +3,8 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom'
 import styled, { ThemeProvider } from 'styled-components'
 import Navigation from './components/Navigation'
 import AboutUs  from './components/AboutUs'
+import DashBoard from './components/DashBoard'
+import CreateFundraiser from './components/CreateFundraiser'
 import theme from './theme'
 import './App.css'
 
@@ -114,6 +116,8 @@ export default function App() {
                 </>
               } />
               <Route path="/about-us" element={<AboutUs />} />
+              <Route path="/dashboard" element={<DashBoard />} />
+              <Route path="/create" element={<CreateFundraiser />} />
             </Routes>
           </ContentContainer>
         </AppContainer>

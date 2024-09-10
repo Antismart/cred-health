@@ -1,117 +1,123 @@
-import React, { useState } from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import styled, { ThemeProvider, createGlobalStyle } from 'styled-components';
-import { ethers } from 'ethers';
-
-import Header from './components/Header';
-import Sidebar from './components/Sidebar';
-import Footer from './components/Footer';
-import HomePage from './components/HomePage';
-import PatientDashboard from './components/PatientDashboard';
-import HospitalDashboard from './components/HospitalDashboard';
-import LoanRequestForm from './components/LoanRequestForm';
-import LoanStatus from './components/LoanStatus';
-import CreditScoreCheck from './components/CreditScoreCheck';
-import HospitalOnboarding from './components/HospitalOnboarding';
-
-const App = () => {
-  const [isDarkTheme, setIsDarkTheme] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-
-  const toggleTheme = () => {
-    setIsDarkTheme(!isDarkTheme);
-  };
-
-  const connectWallet = async () => {
-    if (window.ethereum) {
-      try {
-        await window.ethereum.request({ method: 'eth_requestAccounts' });
-        const provider = new ethers.providers.Web3Provider(window.ethereum);
-        const signer = provider.getSigner();
-        const address = await signer.getAddress();
-        console.log('Connected wallet address:', address);
-        setIsAuthenticated(true);
-      } catch (error) {
-        console.error('Failed to connect wallet:', error);
-      }
-    } else {
-      console.error('No Ethereum wallet detected');
-    }
-  };
-
-  return (
-    <Router>
-      <ThemeProvider theme={isDarkTheme ? darkTheme : lightTheme}>
-        <GlobalStyle />
-        <AppContainer>
-          <Header
-            toggleTheme={toggleTheme}
-            isDarkTheme={isDarkTheme}
-            isAuthenticated={isAuthenticated}
-            connectWallet={connectWallet}
-          />
-          <MainContent>
-            <Sidebar />
-            <PageContent>
-              <Routes>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/patient-dashboard" element={<PatientDashboard />} />
-                <Route path="/hospital-dashboard" element={<HospitalDashboard />} />
-                <Route path="/loan-request" element={<LoanRequestForm />} />
-                <Route path="/loan-status" element={<LoanStatus />} />
-                <Route path="/credit-score-check" element={<CreditScoreCheck />} />
-                <Route path="/hospital-onboarding" element={<HospitalOnboarding />} />
-              </Routes>
-            </PageContent>
-          </MainContent>
-          <Footer />
-        </AppContainer>
-      </ThemeProvider>
-    </Router>
-  );
-};
-
-const lightTheme = {
-  primary: '#3498db',
-  secondary: '#2ecc71',
-  background: '#f0f2f5',
-  text: '#2c3e50',
-  cardBg: '#ffffff',
-};
-
-const darkTheme = {
-  primary: '#3498db',
-  secondary: '#2ecc71',
-  background: '#2c3e50',
-  text: '#ecf0f1',
-  cardBg: '#34495e',
-};
-
-const GlobalStyle = createGlobalStyle`
-  body {
-    margin: 0;
-    padding: 0;
-    font-family: 'Poppins', sans-serif;
-    background: ${({ theme }) => theme.background};
-    color: ${({ theme }) => theme.text};
-    transition: all 0.3s ease;
-  }
-`;
+import React from 'react'
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom'
+import styled, { ThemeProvider } from 'styled-components'
+import Navigation from './components/Navigation'
+import AboutUs  from './components/AboutUs'
+import theme from './theme'
+import './App.css'
 
 const AppContainer = styled.div`
+  background-color: ${props => props.theme.colors.background};
+  color: ${props => props.theme.colors.text};
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-`;
+  font-family: ${props => props.theme.fonts.main};
+`
 
-const MainContent = styled.main`
-  display: flex;
-  flex: 1;
-`;
+const ContentContainer = styled.div`
+  padding: ${props => props.theme.spacing.large};
+`
 
-const PageContent = styled.div`
-  flex: 1;
-  padding: 2rem;
-`;
+const SectionTitle = styled.h2`
+  color: ${props => props.theme.colors.text};
+  margin-bottom: ${props => props.theme.spacing.large};
+`
 
-export default App;
+const CampaignGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: ${props => props.theme.spacing.large};
+`
+
+const CampaignCard = styled.div`
+  background-color: ${props => props.theme.colors.secondaryBackground};
+  border-radius: ${props => props.theme.borderRadius.medium};
+  padding: ${props => props.theme.spacing.large};
+`
+
+const CampaignTitle = styled.h3`
+  color: ${props => props.theme.colors.text};
+  margin-bottom: ${props => props.theme.spacing.small};
+`
+
+const CampaignDescription = styled.p`
+  color: ${props => props.theme.colors.secondaryText};
+  margin-bottom: ${props => props.theme.spacing.small};
+`
+
+const ProgressBar = styled.div`
+  background-color: ${props => props.theme.colors.progressBackground};
+  border-radius: ${props => props.theme.borderRadius.small};
+  height: 8px;
+  margin-bottom: ${props => props.theme.spacing.small};
+  overflow: hidden;
+`
+
+const Progress = styled.div`
+  background-color: ${props => props.theme.colors.primary};
+  height: 100%;
+  width: ${props => props.width};
+`
+
+const CampaignInfo = styled.div`
+  color: ${props => props.theme.colors.secondaryText};
+  font-size: 0.9em;
+`
+
+export default function App() {
+  return (
+    <ThemeProvider theme={theme}>
+      <Router>
+        <AppContainer>
+          <Navigation />
+
+          <ContentContainer>
+            <Routes>
+              <Route path="/" element={
+                <>
+                  <SectionTitle>Active Campaigns</SectionTitle>
+                  <CampaignGrid>
+                    <CampaignCard>
+                      <CampaignTitle>Cancer Treatment for Sarah</CampaignTitle>
+                      <CampaignDescription>Help Sarah afford life-saving cancer treatment</CampaignDescription>
+                      <ProgressBar><Progress width="75%" /></ProgressBar>
+                      <CampaignInfo>75% funded, 14 days remaining</CampaignInfo>
+                    </CampaignCard>
+                    <CampaignCard>
+                      <CampaignTitle>Wheelchair for Michael</CampaignTitle>
+                      <CampaignDescription>Help Michael get the mobility he needs</CampaignDescription>
+                      <ProgressBar><Progress width="60%" /></ProgressBar>
+                      <CampaignInfo>60% funded, 21 days remaining</CampaignInfo>
+                    </CampaignCard>
+                    <CampaignCard>
+                      <CampaignTitle>Prosthetic Leg for Emily</CampaignTitle>
+                      <CampaignDescription>Help Emily regain her mobility</CampaignDescription>
+                      <ProgressBar><Progress width="38%" /></ProgressBar>
+                      <CampaignInfo>38% funded, 7 days remaining</CampaignInfo>
+                    </CampaignCard>
+                  </CampaignGrid>
+
+                  <SectionTitle>Top Campaigns</SectionTitle>
+                  <CampaignGrid>
+                    <CampaignCard>
+                      <CampaignTitle>Life-Saving Surgery for John</CampaignTitle>
+                      <CampaignDescription>Help John get the surgery he needs to survive</CampaignDescription>
+                      <ProgressBar><Progress width="100%" /></ProgressBar>
+                      <CampaignInfo>100% funded, Campaign Ended</CampaignInfo>
+                    </CampaignCard>
+                    <CampaignCard>
+                      <CampaignTitle>Mobility Assistance for Lisa</CampaignTitle>
+                      <CampaignDescription>Help Lisa regain her independence with a new wheelchair</CampaignDescription>
+                      <ProgressBar><Progress width="100%" /></ProgressBar>
+                      <CampaignInfo>100% funded, Campaign Ended</CampaignInfo>
+                    </CampaignCard>
+                  </CampaignGrid>
+                </>
+              } />
+              <Route path="/about-us" element={<AboutUs />} />
+            </Routes>
+          </ContentContainer>
+        </AppContainer>
+      </Router>
+    </ThemeProvider>
+  )
+}

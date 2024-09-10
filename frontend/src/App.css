@@ -8,9 +8,33 @@ html, body {
   background-color: '#000';
 }
 
-#root {
+#root, .App {
   height: 100%;
   width: 100%;
+  min-height: 100vh;
 }
 
 
+
+html {
+  overflow-y: scroll; /* Always show vertical scrollbar */
+}
+
+::-webkit-scrollbar {
+  width: 12px;  /* Width of scrollbar */
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1; /* Light background for better visibility */
+}
+
+/* Style for the scrollbar thumb (the draggable part) */
+::-webkit-scrollbar-thumb {
+  background: #888; /* Darker color for visibility */
+  border-radius: 10px; /* Optional: rounded scrollbar */
+}
+
+/* On hover, make the thumb even more visible */
+::-webkit-scrollbar-thumb:hover {
+  background: #555; /* Darker shade on hover */
+}

@@ -1,9 +1,15 @@
 import React, { useState } from 'react'
 import styled from 'styled-components'
 
-const FormContainer = styled.div`
+const PageContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${props => props.theme.spacing.large};
   max-width: 600px;
   margin: 0 auto;
+`
+
+const FormContainer = styled.div`
   padding: ${props => props.theme.spacing.large};
   background-color: ${props => props.theme.colors.secondaryBackground};
   border-radius: ${props => props.theme.borderRadius.medium};
@@ -67,6 +73,11 @@ const Button = styled.button`
 `
 
 export default function CreateFundraiser() {
+  const [signUpData, setSignUpData] = useState({
+    usrtype: '',
+    hospitalWalletAddress: '',
+  })
+
   const [formData, setFormData] = useState({
     title: '',
     category: '',
@@ -74,7 +85,15 @@ export default function CreateFundraiser() {
     description: '',
   })
 
-  const handleChange = (e) => {
+  const handleSignUpChange = (e) => {
+    const { name, value } = e.target
+    setSignUpData(prevData => ({
+      ...prevData,
+      [name]: value
+    }))
+  }
+
+  const handleFormChange = (e) => {
     const { name, value } = e.target
     setFormData(prevData => ({
       ...prevData,
@@ -82,50 +101,86 @@ export default function CreateFundraiser() {
     }))
   }
 
-  const handleSubmit = (e) => {
+  const handleSignUpSubmit = (e) => {
     e.preventDefault()
-    // Here you would typically send the form data to your backend
-    console.log('Form submitted:', formData)
-    // Reset form or redirect user
+    console.log('Sign Up Data submitted:', signUpData)
+    // Here you would typically send the sign-up data to your backend
+  }
+
+  const handleFundraiserSubmit = (e) => {
+    e.preventDefault()
+    console.log('Fundraiser Form submitted:', formData)
+    // Here you would typically send the fundraiser form data to your backend
   }
 
   return (
-    <FormContainer>
-      <Title>Create a Fundraiser</Title>
-      <Form onSubmit={handleSubmit}>
-        <Label htmlFor="title">Fundraiser Title</Label>
-        <Input
-          type="text"
-          id="title"
-          name="title"
-          value={formData.title}
-          onChange={handleChange}
-          required
-        />
+    <PageContainer>
+      <FormContainer>
+        <Title>Sign Up</Title>
+        <Form onSubmit={handleSignUpSubmit}>
+          <Label htmlFor="usrtype">User Type</Label>
+          <Select
+            id="usrtype"
+            name="usrtype"
+            value={signUpData.usrtype}
+            onChange={handleSignUpChange}
+            required
+          >
+            <option value="">Select user type</option>
+            <option value="0">Patient (0)</option>
+            <option value="1">Donor (1)</option>
+          </Select>
 
+          <Label htmlFor="hospitalWalletAddress">Hospital Wallet Address</Label>
+          <Input
+            type="text"
+            id="hospitalWalletAddress"
+            name="hospitalWalletAddress"
+            value={signUpData.hospitalWalletAddress}
+            onChange={handleSignUpChange}
+            required
+          />
 
-        <Label htmlFor="goal">Fundraising Goal ($)</Label>
-        <Input
-          type="number"
-          id="goal"
-          name="goal"
-          value={formData.goal}
-          onChange={handleChange}
-          required
-          min="1"
-        />
+          <Button type="submit">Sign Up</Button>
+        </Form>
+      </FormContainer>
 
-        <Label htmlFor="description">Describe your fundraiser</Label>
-        <TextArea
-          id="description"
-          name="description"
-          value={formData.description}
-          onChange={handleChange}
-          required
-        />
+      <FormContainer>
+        <Title>Create a Fundraiser</Title>
+        <Form onSubmit={handleFundraiserSubmit}>
+          <Label htmlFor="title">Fundraiser Title</Label>
+          <Input
+            type="text"
+            id="title"
+            name="title"
+            value={formData.title}
+            onChange={handleFormChange}
+            required
+          />
 
-        <Button type="submit">Create Fundraiser</Button>
-      </Form>
-    </FormContainer>
+          <Label htmlFor="goal">Fundraising Goal ($)</Label>
+          <Input
+            type="number"
+            id="goal"
+            name="goal"
+            value={formData.goal}
+            onChange={handleFormChange}
+            required
+            min="1"
+          />
+
+          <Label htmlFor="description">Describe your fundraiser</Label>
+          <TextArea
+            id="description"
+            name="description"
+            value={formData.description}
+            onChange={handleFormChange}
+            required
+          />
+
+          <Button type="submit">Create Fundraiser</Button>
+        </Form>
+      </FormContainer>
+    </PageContainer>
   )
 }

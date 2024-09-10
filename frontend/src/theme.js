@@ -2,7 +2,7 @@ const theme = {
     colors: {
       primary: '#1890ff',
       primaryHover: '#40a9ff',
-      background: '#001529',
+      background: '#111827',
       secondaryBackground: '#002140',
       text: '#ffffff',
       secondaryText: '#8c8c8c',

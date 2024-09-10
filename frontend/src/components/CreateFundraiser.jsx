@@ -111,7 +111,7 @@ export default function CreateFundraiser() {
           onChange={handleChange}
           required
         >
-          <option value="">Select a category</option>
+          <option value="" disabled>Select a category</option>
           <option value="medical">Medical Expenses</option>
           <option value="community">Community Project</option>
           <option value="education">Education</option>

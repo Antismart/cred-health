@@ -34,6 +34,11 @@ const CampaignCard = styled.div`
   background-color: ${props => props.theme.colors.secondaryBackground};
   border-radius: ${props => props.theme.borderRadius.medium};
   padding: ${props => props.theme.spacing.large};
+
+  &:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
 `
 
 const CampaignTitle = styled.h3`

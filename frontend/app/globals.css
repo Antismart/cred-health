@@ -1,0 +1,124 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Backgrounds and Foregrounds */
+    --background: 210 16% 10%; /* Darker blue-black background */
+    --foreground: 210 50% 90%; /* Light text color for high contrast */
+    --card: 210 22% 18%; /* Darker card background */
+    --card-foreground: 210 50% 90%; /* Light text color for card */
+    --popover: 210 22% 18%; /* Same as card for popovers */
+    --popover-foreground: 210 50% 90%; /* Same as card foreground */
+
+    /* Primary and Secondary Colors */
+    --primary: 210 40% 50%; /* Bright blue for primary elements */
+    --primary-foreground: 210 20% 98%; /* Off-white text on primary */
+    --secondary: 210 15% 25%; /* Slightly lighter dark for secondary elements */
+    --secondary-foreground: 210 50% 90%; /* Light text */
+    
+    /* Accent, Muted, and Destructive Colors */
+    --accent: 210 30% 40%; /* Slightly brighter blue for accents */
+    --accent-foreground: 210 50% 90%; /* Light text for accents */
+    --muted: 210 10% 20%; /* Muted grey */
+    --muted-foreground: 210 20% 60%; /* Muted grey text */
+    --destructive: 0 98% 44%; /* Dark red for destructive actions */
+    --destructive-foreground: 210 50% 90%; /* Light text on red */
+
+    /* Border, Input, Ring, and Radius */
+    --border: 210 12% 15%; /* Dark border for separation */
+    --input: 210 12% 15%; /* Dark input background */
+    --ring: 210 40% 50%; /* Bright blue for focus rings */
+    --radius: 0.375rem; /* Slightly rounded corners */
+    
+    /* Chart Colors */
+    --chart-1: 210 70% 50%; /* Blues for charts */
+    --chart-2: 210 60% 40%;
+    --chart-3: 210 55% 35%;
+    --chart-4: 210 50% 30%;
+    --chart-5: 210 45% 25%;
+  }
+
+  .dark {
+    --background: 210 16% 10%;
+    --foreground: 210 50% 90%;
+    --card: 210 22% 18%;
+    --card-foreground: 210 50% 90%;
+    --popover: 210 22% 18%;
+    --popover-foreground: 210 50% 90%;
+    --primary: 210 40% 50%;
+    --primary-foreground: 210 20% 98%;
+    --secondary: 210 15% 25%;
+    --secondary-foreground: 210 50% 90%;
+    --muted: 210 10% 20%;
+    --muted-foreground: 210 20% 60%;
+    --accent: 210 30% 40%;
+    --accent-foreground: 210 50% 90%;
+    --destructive: 0 62.8% 20%;
+    --destructive-foreground: 210 50% 90%;
+    --border: 210 12% 15%;
+    --input: 210 12% 15%;
+    --ring: 210 40% 50%;
+    --chart-1: 210 70% 50%;
+    --chart-2: 210 60% 40%;
+    --chart-3: 210 55% 35%;
+    --chart-4: 210 50% 30%;
+    --chart-5: 210 45% 25%;
+  }
+  
+  /* Custom Font Classes */
+  .font-body {
+    font-family: var(--font-body);
+  }
+
+  .font-heading {
+    font-family: var(--font-heading);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-body; /* Apply base body styles */
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading; /* Apply font-heading for heading tags */
+  }
+
+  .navbar {
+    @apply flex justify-between items-center p-4 bg-card text-card-foreground;
+  }
+
+  .navbar a {
+    @apply text-secondary-foreground hover:text-primary-foreground transition-colors duration-300;
+  }
+
+  .navbar button {
+    @apply bg-primary text-primary-foreground py-2 px-4 rounded-radius hover:bg-primary-foreground hover:text-primary;
+  }
+
+  .card {
+    @apply bg-card text-card-foreground p-6 rounded-radius shadow-lg;
+  }
+
+  .card-title {
+    @apply text-xl font-bold mb-2;
+  }
+
+  .card-subtitle {
+    @apply text-sm text-muted-foreground;
+  }
+
+  .progress-bar {
+    @apply w-full h-2 bg-muted rounded-radius mt-4;
+  }
+
+  .progress-bar-filled {
+    @apply h-2 bg-primary rounded-radius;
+  }
+}

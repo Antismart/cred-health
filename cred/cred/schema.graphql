@@ -1,6 +1,39 @@
-type ExampleEntity @entity {
+ 
+type User @entity {
   id: Bytes!
-  count: BigInt!
-  fundraiserId: BigInt! # uint256
-  donor: Bytes! # address
+  userType: Int!
+  isRegistered: Boolean!
+  condition: String
+  hospital: Hospital
+  fundraisers: [Fundraiser!]! @derivedFrom(field: "patient")
+}
+
+type Hospital @entity {
+  id: Bytes!
+  isRegistered: Boolean!
+  totalFundraisersProcessed: BigInt!
+  totalAmountRaised: BigInt!
+  patients: [User!]! @derivedFrom(field: "hospital")
+  fundraisers: [Fundraiser!]! @derivedFrom(field: "hospital")
+}
+
+type Fundraiser @entity {
+  id: ID!
+  patient: User!
+  hospital: Hospital!
+  targetAmount: BigInt!
+  amountRaised: BigInt!
+  condition: String!
+  description: String!
+  completed: Boolean!
+  approved: Boolean!
+  donations: [Donation!]! @derivedFrom(field: "fundraiser")
+}
+
+type Donation @entity {
+  id: ID!
+  fundraiser: Fundraiser!
+  donor: Bytes!
+  amount: BigInt!
+  timestamp: BigInt!
 }

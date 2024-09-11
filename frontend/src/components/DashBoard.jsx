@@ -3,14 +3,15 @@ import { useQuery, gql } from '@apollo/client';
 import Web3 from 'web3';
 
 const GET_USER_DATA = gql`
-  query GetUserData($userAddress: String!) {
+  query GetUserData($userAddress: Bytes!) {
     user(id: $userAddress) {
       id
       userType
       condition
       hospital {
         id
-        name
+        totalFundraisersProcessed
+        totalAmountRaised
       }
       fundraisers {
         id
@@ -29,7 +30,7 @@ const Dashboard = () => {
   const [web3, setWeb3] = useState(null);
 
   const { loading, error, data } = useQuery(GET_USER_DATA, {
-    variables: { userAddress: account },
+    variables: { userAddress: account?.toLowerCase() },
     skip: !account,
   });
 
@@ -38,6 +39,17 @@ const Dashboard = () => {
       if (window.ethereum) {
         const web3Instance = new Web3(window.ethereum);
         setWeb3(web3Instance);
+
+        // Check if already connected
+        const accounts = await web3Instance.eth.getAccounts();
+        if (accounts.length > 0) {
+          setAccount(accounts[0]);
+        }
+
+        // Listen for account changes
+        window.ethereum.on('accountsChanged', (accounts) => {
+          setAccount(accounts[0]);
+        });
       }
     };
 
@@ -58,6 +70,43 @@ const Dashboard = () => {
     }
   };
 
+  const renderUserInfo = () => {
+    if (!data?.user) return null;
+    return (
+      <div style={{ marginBottom: '24px', padding: '16px', border: '1px solid #e5e7eb', borderRadius: '8px', backgroundColor: 'white' }}>
+        <h2 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '8px' }}>User Information</h2>
+        <p><strong>User Type:</strong> {data.user.userType === '0' ? 'Patient' : 'Donor'}</p>
+        <p><strong>Condition:</strong> {data.user.condition || 'N/A'}</p>
+        {data.user.hospital && (
+          <>
+            <p><strong>Associated Hospital:</strong> {data.user.hospital.id}</p>
+            <p><strong>Total Fundraisers Processed:</strong> {data.user.hospital.totalFundraisersProcessed}</p>
+            <p><strong>Total Amount Raised:</strong> {web3.utils.fromWei(data.user.hospital.totalAmountRaised, 'ether')} ETH</p>
+          </>
+        )}
+      </div>
+    );
+  };
+
+  const renderFundraisers = () => {
+    if (!data?.user?.fundraisers || data.user.fundraisers.length === 0) return null;
+    return (
+      <div style={{ padding: '16px', border: '1px solid #e5e7eb', borderRadius: '8px', backgroundColor: 'white' }}>
+        <h2 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '16px' }}>Your Fundraisers</h2>
+        {data.user.fundraisers.map((fundraiser, index) => (
+          <div key={fundraiser.id} style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e5e7eb', borderRadius: '4px' }}>
+            <h3 style={{ fontWeight: 'bold' }}>Fundraiser {index + 1}</h3>
+            <p><strong>Target:</strong> {web3.utils.fromWei(fundraiser.targetAmount, 'ether')} ETH</p>
+            <p><strong>Raised:</strong> {web3.utils.fromWei(fundraiser.amountRaised, 'ether')} ETH</p>
+            <p><strong>Condition:</strong> {fundraiser.condition}</p>
+            <p><strong>Description:</strong> {fundraiser.description}</p>
+            <p><strong>Status:</strong> {fundraiser.completed ? 'Completed' : 'Ongoing'}</p>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   if (loading) return <p>Loading...</p>;
   if (error) return <div style={{ color: 'red' }}>Error: {error.message}</div>;
 
@@ -72,29 +121,8 @@ const Dashboard = () => {
       ) : (
         <div>
           <p style={{ marginBottom: '16px', textAlign: 'center' }}>Your account: {account}</p>
-          {data?.user && (
-            <div style={{ marginBottom: '24px', padding: '16px', border: '1px solid #e5e7eb', borderRadius: '8px', backgroundColor: 'white' }}>
-              <h2 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '8px' }}>User Information</h2>
-              <p><strong>User Type:</strong> {data.user.userType}</p>
-              <p><strong>Condition:</strong> {data.user.condition || 'N/A'}</p>
-              <p><strong>Associated Hospital:</strong> {data.user.hospital?.name || 'N/A'}</p>
-            </div>
-          )}
-          {data?.user?.fundraisers && data.user.fundraisers.length > 0 && (
-            <div style={{ padding: '16px', border: '1px solid #e5e7eb', borderRadius: '8px', backgroundColor: 'white' }}>
-              <h2 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '16px' }}>Your Fundraisers</h2>
-              {data.user.fundraisers.map((fundraiser, index) => (
-                <div key={fundraiser.id} style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e5e7eb', borderRadius: '4px' }}>
-                  <h3 style={{ fontWeight: 'bold' }}>Fundraiser {index + 1}</h3>
-                  <p><strong>Target:</strong> {web3.utils.fromWei(fundraiser.targetAmount, 'ether')} ETH</p>
-                  <p><strong>Raised:</strong> {web3.utils.fromWei(fundraiser.amountRaised, 'ether')} ETH</p>
-                  <p><strong>Condition:</strong> {fundraiser.condition}</p>
-                  <p><strong>Description:</strong> {fundraiser.description}</p>
-                  <p><strong>Status:</strong> {fundraiser.completed ? 'Completed' : 'Ongoing'}</p>
-                </div>
-              ))}
-            </div>
-          )}
+          {renderUserInfo()}
+          {renderFundraisers()}
         </div>
       )}
     </div>

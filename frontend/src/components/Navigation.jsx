@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import styled from 'styled-components';
 import Web3 from 'web3';
+import logo from "../../assets/credlogo.png"; // Import your logo
 
 const Nav = styled.nav`
   background-color: ${props => props.theme.colors.background};
@@ -12,10 +13,15 @@ const Nav = styled.nav`
 `;
 
 const Logo = styled(Link)`
-  color: ${props => props.theme.colors.text};
-  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
   text-decoration: none;
-  font-weight: bold;
+`;
+
+const LogoImage = styled.img`
+  width: 40px;  /* Adjust the width as needed */
+  height: auto; /* Maintains the aspect ratio */
+  margin-right: 10px;  /* Space between logo and text (if any text) */
 `;
 
 const NavLinks = styled.div`
@@ -92,7 +98,10 @@ export default function Navigation() {
 
   return (
     <Nav>
-      <Logo to="/">🚀 CrowdHealth</Logo>
+      <Logo to="/">
+        <LogoImage src={logo} alt="Logo" /> {/* Use the logo image here */}
+        KredHealth
+      </Logo>
       <NavLinks>
         <NavLink to="/">Explore</NavLink>
         <NavLink to="/create">Create</NavLink>

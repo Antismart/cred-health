@@ -149,16 +149,27 @@ export default function CreateFundraiser() {
 
     try {
       const userType = parseInt(userData.userType);
+
+      // For Donors, send a default address; for Patients, validate the hospital address
+      const condition = userType === 0 ? userData.condition : '';
+      const hospitalAddress = userType === 0 ? userData.hospitalAddress : '0x0000000000000000000000000000000000000000';
+
+      // Ensure hospital address is valid for patients
+      if (userType === 0 && !web3.utils.isAddress(userData.hospitalAddress)) {
+        setError('Invalid hospital address. Please enter a valid Ethereum address.');
+        return;
+      }
+
       const gasEstimate = await contract.methods.registerUser(
         userType,
-        userData.condition || '',
-        userData.hospitalAddress || ''
+        condition,
+        hospitalAddress
       ).estimateGas({ from: account });
 
       await contract.methods.registerUser(
         userType,
-        userData.condition || '',
-        userData.hospitalAddress || ''
+        condition,
+        hospitalAddress
       ).send({ from: account, gas: gasEstimate });
 
       setSuccess('User registered successfully!');
@@ -199,18 +210,29 @@ export default function CreateFundraiser() {
       <FormContainer>
         <Title>User Registration</Title>
         <Form onSubmit={handleUserRegistration}>
-        <Label htmlFor="userType">User Type</Label>
-        <Input
-        type="text"
-        id="userType"
-        name="userType"
-        value={userData.userType}
-        onChange={handleUserDataChange}
-        placeholder="Enter 0 for Patient or 1 for Donor"
-        required
-        />
+          <Label htmlFor="userType">User Type</Label>
+          <select
+            id="userType"
+            name="userType"
+            value={userData.userType}
+            onChange={handleUserDataChange}
+            required
+            style={{
+              width: '100%',  // Adjust width to make it full width
+              padding: '10px',  // Adjust padding to make the input larger
+              fontSize: '16px', // Adjust font size for readability
+              borderRadius: '5px', // Optional: Rounded corners
+              border: '1px solid #ccc' // Optional: Border style
+            }}
+          >
+            <option value="">Select user type</option>
+            <option value="0">Patient</option>
+            <option value="1">Donor</option>
+          </select>
 
 
+
+          {/* Show condition and hospital address only if registering as a patient */}
           {userData.userType === '0' && (
             <>
               <Label htmlFor="condition">Medical Condition</Label>

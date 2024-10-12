@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.24;
+pragma solidity ^0.8.20;
 
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-
-contract HospitalFundraisingPlatform is ReentrancyGuard {
+contract HospitalFundraisingPlatform {
     address public owner;
+    address[] private registeredHospitals;
 
     struct Hospital {
         address hospitalAddress;
@@ -24,7 +23,10 @@ contract HospitalFundraisingPlatform is ReentrancyGuard {
         bool approved;
     }
 
-    enum UserType { Patient, Donor }
+    enum UserType {
+        Patient,
+        Donor
+    }
 
     struct User {
         address userAddress;
@@ -42,7 +44,8 @@ contract HospitalFundraisingPlatform is ReentrancyGuard {
     uint256 public fundraiserCounter;
 
     event HospitalRegistered(address indexed hospital);
-    event UserRegistered(address indexed user, UserType userType);
+    event PatientRegistered(address indexed user, address indexed hospital);
+    event DonorRegistered(address indexed user);
     event FundraiserRequested(
         uint256 indexed fundraiserId,
         address indexed patient,
@@ -51,8 +54,15 @@ contract HospitalFundraisingPlatform is ReentrancyGuard {
         string description
     );
     event FundraiserApproved(uint256 indexed fundraiserId);
-    event FundsDisbursed(uint256 indexed fundraiserId, address indexed hospital);
-    event DonationReceived(uint256 indexed fundraiserId, address indexed donor, uint256 amount);
+    event FundsDisbursed(
+        uint256 indexed fundraiserId,
+        address indexed hospital
+    );
+    event DonationReceived(
+        uint256 indexed fundraiserId,
+        address indexed donor,
+        uint256 amount
+    );
 
     modifier onlyRegisteredHospital(address _hospital) {
         require(hospitals[_hospital].isRegistered, "Not a registered hospital");
@@ -74,62 +84,123 @@ contract HospitalFundraisingPlatform is ReentrancyGuard {
     }
 
     function registerHospital(address _hospital) external onlyOwner {
-        require(!hospitals[_hospital].isRegistered, "Hospital already registered");
+        require(
+            !hospitals[_hospital].isRegistered,
+            "Hospital already registered"
+        );
         hospitals[_hospital] = Hospital(_hospital, true, 0, 0);
+        registeredHospitals.push(_hospital); // Add the hospital to the list of registered hospitals
         emit HospitalRegistered(_hospital);
     }
 
-    function registerUser(UserType _userType, string memory _condition, address _hospital) external {
-        require(!users[msg.sender].isRegistered, "User already registered");
-
-        if (_userType == UserType.Patient) {
-            require(bytes(_condition).length > 0, "Condition is required for patients");
-            require(hospitals[_hospital].isRegistered, "Associated hospital must be registered");
-            users[msg.sender] = User(msg.sender, _userType, true, _condition, _hospital);
-        } else {
-            users[msg.sender] = User(msg.sender, _userType, true, "", address(0));
-        }
-
-        emit UserRegistered(msg.sender, _userType);
+    // Function to get all registered hospitals
+    function getAllHospitals() external view returns (address[] memory) {
+        return registeredHospitals;
     }
 
-function createFundraiser(uint256 _targetAmount, string memory _description) 
-    external 
-    nonReentrant 
-    onlyRegisteredUser(msg.sender) 
-    returns (uint256)
-{
-    User storage user = users[msg.sender];
-    require(user.userType == UserType.Patient, "Only patients can create fundraisers");
-    require(_targetAmount > 0, "Target amount must be greater than zero");
-    require(bytes(_description).length > 0, "Description cannot be empty");
+    // Function to register a patient
+    function registerPatient(string memory _condition, address _hospital)
+        external
+    {
+        require(!users[msg.sender].isRegistered, "User already registered");
+        require(
+            bytes(_condition).length > 0,
+            "Condition is required for patients"
+        );
+        require(
+            hospitals[_hospital].isRegistered,
+            "Associated hospital must be registered"
+        );
 
-    uint256 newFundraiserId = fundraiserCounter;
-    fundraisers[newFundraiserId] = Fundraiser({
-        patient: msg.sender,
-        hospital: user.hospital,
-        targetAmount: _targetAmount,
-        amountRaised: 0,
-        condition: user.condition,
-        description: _description,
-        completed: false,
-        approved: true // Auto-approve for simplicity, but you might want to change this
-    });
+        users[msg.sender] = User({
+            userAddress: msg.sender,
+            userType: UserType.Patient,
+            isRegistered: true,
+            condition: _condition,
+            hospital: _hospital
+        });
 
-    patientFundraisers[msg.sender].push(newFundraiserId);
+        emit PatientRegistered(msg.sender, _hospital);
+    }
 
-    emit FundraiserRequested(newFundraiserId, msg.sender, user.hospital, _targetAmount, _description);
-    
-    fundraiserCounter++;
+    // Function to register a donor
+    function registerDonor() external {
+        require(!users[msg.sender].isRegistered, "User already registered");
 
-    return newFundraiserId;
-}
-    function donateToFundraiser(uint256 _fundraiserId) external payable nonReentrant {
+        users[msg.sender] = User({
+            userAddress: msg.sender,
+            userType: UserType.Donor,
+            isRegistered: true,
+            condition: "",
+            hospital: address(0)
+        });
+
+        emit DonorRegistered(msg.sender);
+    }
+
+    // Function to create a fundraiser by a registered patient with user-inputted hospital
+    function createFundraiser(
+        uint256 _targetAmount,
+        string memory _description,
+        address _hospital
+    ) public onlyRegisteredUser(msg.sender) returns (uint256) {
+        User storage user = users[msg.sender];
+        require(
+            user.userType == UserType.Patient,
+            "Only patients can create fundraisers"
+        );
+        require(_targetAmount > 0, "Target amount must be greater than zero");
+        require(bytes(_description).length > 0, "Description cannot be empty");
+        require(
+            hospitals[_hospital].isRegistered,
+            "Hospital must be registered"
+        );
+
+        uint256 newFundraiserId = fundraiserCounter;
+        fundraiserCounter++; // Increment the counter after assigning
+
+        // Use storage here to update the state in the mapping
+        Fundraiser storage newFundraiser = fundraisers[newFundraiserId];
+        
+        newFundraiser.patient = msg.sender;
+        newFundraiser.hospital = _hospital; // Use the hospital address input by the user
+        newFundraiser.targetAmount = _targetAmount;
+        newFundraiser.amountRaised = 0;
+        newFundraiser.condition = user.condition;
+        newFundraiser.description = _description;
+        newFundraiser.completed = false;
+        newFundraiser.approved = false; // Initially set to false; require manual approval
+
+        patientFundraisers[msg.sender].push(newFundraiserId);
+
+        emit FundraiserRequested(
+            newFundraiserId,
+            msg.sender,
+            _hospital,
+            _targetAmount,
+            _description
+        );
+
+        return newFundraiserId;
+    }
+
+    // Owner function to approve a fundraiser
+    function approveFundraiser(uint256 _fundraiserId) external onlyOwner {
+        Fundraiser storage fundraiser = fundraisers[_fundraiserId];
+        require(!fundraiser.approved, "Fundraiser is already approved");
+        fundraiser.approved = true;
+
+        emit FundraiserApproved(_fundraiserId);
+    }
+
+    // Function for donating in Ether
+    function donateToFundraiser(uint256 _fundraiserId) external payable {
         Fundraiser storage fundraiser = fundraisers[_fundraiserId];
         require(fundraiser.approved, "Fundraiser not approved");
         require(!fundraiser.completed, "Fundraiser already completed");
-        require(msg.value > 0, "Donation must be greater than zero");
+        
 
+        // Update the amount raised by the fundraiser
         fundraiser.amountRaised += msg.value;
 
         emit DonationReceived(_fundraiserId, msg.sender, msg.value);
@@ -141,24 +212,28 @@ function createFundraiser(uint256 _targetAmount, string memory _description)
         }
     }
 
-    function disburseFunds(uint256 _fundraiserId)
-        internal
-        nonReentrant
-    {
+    function disburseFunds(uint256 _fundraiserId) internal {
         Fundraiser storage fundraiser = fundraisers[_fundraiserId];
-        require(hospitals[fundraiser.hospital].isRegistered, "Hospital not registered");
+        require(
+            hospitals[fundraiser.hospital].isRegistered,
+            "Hospital not registered"
+        );
         require(fundraiser.completed, "Fundraising not completed");
 
         hospitals[fundraiser.hospital].totalFundraisersProcessed++;
-        hospitals[fundraiser.hospital].totalAmountRaised += fundraiser.amountRaised;
+        hospitals[fundraiser.hospital].totalAmountRaised += fundraiser
+            .amountRaised;
 
-        (bool success, ) = fundraiser.hospital.call{value: fundraiser.amountRaised}("");
+        // Transfer the raised amount to the hospital
+        (bool success, ) = fundraiser.hospital.call{
+            value: fundraiser.amountRaised
+        }("");
         require(success, "Transfer failed");
 
         emit FundsDisbursed(_fundraiserId, fundraiser.hospital);
     }
 
-    function withdrawFunds(uint256 _amount) external onlyOwner nonReentrant {
+    function withdrawFunds(uint256 _amount) external onlyOwner {
         (bool success, ) = owner.call{value: _amount}("");
         require(success, "Withdraw failed");
     }

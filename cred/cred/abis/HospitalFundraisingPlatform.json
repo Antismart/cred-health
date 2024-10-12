@@ -1,5 +1,64 @@
 [
-  { "inputs": [], "stateMutability": "nonpayable", "type": "constructor" },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_fundraiserId",
+        "type": "uint256"
+      }
+    ],
+    "name": "approveFundraiser",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_targetAmount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "string",
+        "name": "_description",
+        "type": "string"
+      },
+      {
+        "internalType": "address",
+        "name": "_hospital",
+        "type": "address"
+      }
+    ],
+    "name": "createFundraiser",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_fundraiserId",
+        "type": "uint256"
+      }
+    ],
+    "name": "donateToFundraiser",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
   {
     "anonymous": false,
     "inputs": [
@@ -23,6 +82,19 @@
       }
     ],
     "name": "DonationReceived",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      }
+    ],
+    "name": "DonorRegistered",
     "type": "event"
   },
   {
@@ -117,67 +189,172 @@
         "type": "address"
       },
       {
-        "indexed": false,
-        "internalType": "enum HospitalFundraisingPlatform.UserType",
-        "name": "userType",
-        "type": "uint8"
+        "indexed": true,
+        "internalType": "address",
+        "name": "hospital",
+        "type": "address"
       }
     ],
-    "name": "UserRegistered",
+    "name": "PatientRegistered",
     "type": "event"
   },
   {
-    "inputs": [
-      { "internalType": "uint256", "name": "_targetAmount", "type": "uint256" },
-      { "internalType": "string", "name": "_description", "type": "string" }
-    ],
-    "name": "createFundraiser",
-    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "inputs": [],
+    "name": "registerDonor",
+    "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
   {
     "inputs": [
-      { "internalType": "uint256", "name": "_fundraiserId", "type": "uint256" }
+      {
+        "internalType": "address",
+        "name": "_hospital",
+        "type": "address"
+      }
     ],
-    "name": "donateToFundraiser",
+    "name": "registerHospital",
     "outputs": [],
-    "stateMutability": "payable",
+    "stateMutability": "nonpayable",
     "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "_condition",
+        "type": "string"
+      },
+      {
+        "internalType": "address",
+        "name": "_hospital",
+        "type": "address"
+      }
+    ],
+    "name": "registerPatient",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "withdrawFunds",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "stateMutability": "payable",
+    "type": "receive"
   },
   {
     "inputs": [],
     "name": "fundraiserCounter",
-    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
-    "name": "fundraisers",
     "outputs": [
-      { "internalType": "address", "name": "patient", "type": "address" },
-      { "internalType": "address", "name": "hospital", "type": "address" },
-      { "internalType": "uint256", "name": "targetAmount", "type": "uint256" },
-      { "internalType": "uint256", "name": "amountRaised", "type": "uint256" },
-      { "internalType": "string", "name": "condition", "type": "string" },
-      { "internalType": "string", "name": "description", "type": "string" },
-      { "internalType": "bool", "name": "completed", "type": "bool" },
-      { "internalType": "bool", "name": "approved", "type": "bool" }
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
     ],
     "stateMutability": "view",
     "type": "function"
   },
   {
     "inputs": [
-      { "internalType": "uint256", "name": "_fundraiserId", "type": "uint256" }
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "fundraisers",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "patient",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "hospital",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "targetAmount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amountRaised",
+        "type": "uint256"
+      },
+      {
+        "internalType": "string",
+        "name": "condition",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "description",
+        "type": "string"
+      },
+      {
+        "internalType": "bool",
+        "name": "completed",
+        "type": "bool"
+      },
+      {
+        "internalType": "bool",
+        "name": "approved",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getAllHospitals",
+    "outputs": [
+      {
+        "internalType": "address[]",
+        "name": "",
+        "type": "address[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_fundraiserId",
+        "type": "uint256"
+      }
     ],
     "name": "getFundraiserDetails",
     "outputs": [
       {
         "components": [
-          { "internalType": "address", "name": "patient", "type": "address" },
-          { "internalType": "address", "name": "hospital", "type": "address" },
+          {
+            "internalType": "address",
+            "name": "patient",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "hospital",
+            "type": "address"
+          },
           {
             "internalType": "uint256",
             "name": "targetAmount",
@@ -188,10 +365,26 @@
             "name": "amountRaised",
             "type": "uint256"
           },
-          { "internalType": "string", "name": "condition", "type": "string" },
-          { "internalType": "string", "name": "description", "type": "string" },
-          { "internalType": "bool", "name": "completed", "type": "bool" },
-          { "internalType": "bool", "name": "approved", "type": "bool" }
+          {
+            "internalType": "string",
+            "name": "condition",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "description",
+            "type": "string"
+          },
+          {
+            "internalType": "bool",
+            "name": "completed",
+            "type": "bool"
+          },
+          {
+            "internalType": "bool",
+            "name": "approved",
+            "type": "bool"
+          }
         ],
         "internalType": "struct HospitalFundraisingPlatform.Fundraiser",
         "name": "",
@@ -203,7 +396,11 @@
   },
   {
     "inputs": [
-      { "internalType": "address", "name": "_hospital", "type": "address" }
+      {
+        "internalType": "address",
+        "name": "_hospital",
+        "type": "address"
+      }
     ],
     "name": "getHospitalDetails",
     "outputs": [
@@ -214,7 +411,11 @@
             "name": "hospitalAddress",
             "type": "address"
           },
-          { "internalType": "bool", "name": "isRegistered", "type": "bool" },
+          {
+            "internalType": "bool",
+            "name": "isRegistered",
+            "type": "bool"
+          },
           {
             "internalType": "uint256",
             "name": "totalFundraisersProcessed",
@@ -236,17 +437,31 @@
   },
   {
     "inputs": [
-      { "internalType": "address", "name": "_patient", "type": "address" }
+      {
+        "internalType": "address",
+        "name": "_patient",
+        "type": "address"
+      }
     ],
     "name": "getPatientFundraisers",
     "outputs": [
-      { "internalType": "uint256[]", "name": "", "type": "uint256[]" }
+      {
+        "internalType": "uint256[]",
+        "name": "",
+        "type": "uint256[]"
+      }
     ],
     "stateMutability": "view",
     "type": "function"
   },
   {
-    "inputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
     "name": "hospitals",
     "outputs": [
       {
@@ -254,7 +469,11 @@
         "name": "hospitalAddress",
         "type": "address"
       },
-      { "internalType": "bool", "name": "isRegistered", "type": "bool" },
+      {
+        "internalType": "bool",
+        "name": "isRegistered",
+        "type": "bool"
+      },
       {
         "internalType": "uint256",
         "name": "totalFundraisersProcessed",
@@ -272,69 +491,77 @@
   {
     "inputs": [],
     "name": "owner",
-    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      { "internalType": "address", "name": "", "type": "address" },
-      { "internalType": "uint256", "name": "", "type": "uint256" }
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
     ],
-    "name": "patientFundraisers",
-    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
     "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      { "internalType": "address", "name": "_hospital", "type": "address" }
-    ],
-    "name": "registerHospital",
-    "outputs": [],
-    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
     "inputs": [
       {
-        "internalType": "enum HospitalFundraisingPlatform.UserType",
-        "name": "_userType",
-        "type": "uint8"
+        "internalType": "address",
+        "name": "",
+        "type": "address"
       },
-      { "internalType": "string", "name": "_condition", "type": "string" },
-      { "internalType": "address", "name": "_hospital", "type": "address" }
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
     ],
-    "name": "registerUser",
-    "outputs": [],
-    "stateMutability": "nonpayable",
+    "name": "patientFundraisers",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
-    "inputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
     "name": "users",
     "outputs": [
-      { "internalType": "address", "name": "userAddress", "type": "address" },
+      {
+        "internalType": "address",
+        "name": "userAddress",
+        "type": "address"
+      },
       {
         "internalType": "enum HospitalFundraisingPlatform.UserType",
         "name": "userType",
         "type": "uint8"
       },
-      { "internalType": "bool", "name": "isRegistered", "type": "bool" },
-      { "internalType": "string", "name": "condition", "type": "string" },
-      { "internalType": "address", "name": "hospital", "type": "address" }
+      {
+        "internalType": "bool",
+        "name": "isRegistered",
+        "type": "bool"
+      },
+      {
+        "internalType": "string",
+        "name": "condition",
+        "type": "string"
+      },
+      {
+        "internalType": "address",
+        "name": "hospital",
+        "type": "address"
+      }
     ],
     "stateMutability": "view",
     "type": "function"
-  },
-  {
-    "inputs": [
-      { "internalType": "uint256", "name": "_amount", "type": "uint256" }
-    ],
-    "name": "withdrawFunds",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  { "stateMutability": "payable", "type": "receive" }
+  }
 ]

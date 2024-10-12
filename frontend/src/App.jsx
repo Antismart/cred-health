@@ -1,55 +1,57 @@
-import React from 'react'
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom'
-import styled, { ThemeProvider } from 'styled-components'
-import Navigation from './components/Navigation'
-import AboutUs  from './components/AboutUs'
-import DashBoard from './components/DashBoard'
-import CreateFundraiser from './components/CreateFundraiser'
-import theme from './theme'
-import './App.css'
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import styled, { ThemeProvider } from 'styled-components';
+import Web3 from 'web3';
+import Navigation from './components/Navigation';
+import AboutUs from './components/AboutUs';
+import DashBoard from './components/DashBoard';
+import CreateFundraiser from './components/CreateFundraiser';
+import ActiveCampaigns from './components/ActiveCampaigns';
+import theme from './theme';
+import './App.css';
+import contractABI from './contracts/abi/med.json';
 
 const AppContainer = styled.div`
   background-color: ${props => props.theme.colors.background};
   color: ${props => props.theme.colors.text};
   min-height: 100vh;
   font-family: ${props => props.theme.fonts.main};
-`
+`;
 
 const ContentContainer = styled.div`
   padding: ${props => props.theme.spacing.large};
-`
+`;
 
 const SectionTitle = styled.h2`
   color: ${props => props.theme.colors.text};
   margin-bottom: ${props => props.theme.spacing.large};
-`
+`;
 
 const CampaignGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: ${props => props.theme.spacing.large};
-`
+`;
 
 const CampaignCard = styled.div`
   background-color: ${props => props.theme.colors.secondaryBackground};
   border-radius: ${props => props.theme.borderRadius.medium};
   padding: ${props => props.theme.spacing.large};
-
   &:hover {
     transform: scale(1.02);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   }
-`
+`;
 
 const CampaignTitle = styled.h3`
   color: ${props => props.theme.colors.text};
   margin-bottom: ${props => props.theme.spacing.small};
-`
+`;
 
 const CampaignDescription = styled.p`
   color: ${props => props.theme.colors.secondaryText};
   margin-bottom: ${props => props.theme.spacing.small};
-`
+`;
 
 const ProgressBar = styled.div`
   background-color: ${props => props.theme.colors.progressBackground};
@@ -57,66 +59,172 @@ const ProgressBar = styled.div`
   height: 8px;
   margin-bottom: ${props => props.theme.spacing.small};
   overflow: hidden;
-`
+`;
 
 const Progress = styled.div`
   background-color: ${props => props.theme.colors.primary};
   height: 100%;
   width: ${props => props.width};
-`
+`;
 
 const CampaignInfo = styled.div`
   color: ${props => props.theme.colors.secondaryText};
   font-size: 0.9em;
-`
+`;
+
+const DonateButton = styled.button`
+  margin-top: ${props => props.theme.spacing.small};
+  padding: ${props => props.theme.spacing.small} ${props => props.theme.spacing.medium};
+  background-color: ${props => props.theme.colors.primary};
+  color: ${props => props.theme.colors.text};
+  border: none;
+  border-radius: ${props => props.theme.borderRadius.small};
+  cursor: pointer;
+  &:hover {
+    background-color: ${props => props.theme.colors.primaryHover};
+  }
+`;
+
+// New components for modal
+const Modal = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+`;
+
+const ModalContent = styled.div`
+  background-color: ${props => props.theme.colors.background};
+  padding: ${props => props.theme.spacing.large};
+  border-radius: ${props => props.theme.borderRadius.medium};
+  width: 300px;
+`;
+
+const Input = styled.input`
+  width: 100%;
+  padding: ${props => props.theme.spacing.small};
+  margin-bottom: ${props => props.theme.spacing.medium};
+`;
 
 export default function App() {
+  const [campaigns, setCampaigns] = useState([]);
+  const [web3, setWeb3] = useState(null);
+  const [contract, setContract] = useState(null);
+  const [account, setAccount] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [selectedCampaign, setSelectedCampaign] = useState(null);
+  const [donationAmount, setDonationAmount] = useState('');
+
+  useEffect(() => {
+    const initWeb3 = async () => {
+      if (window.ethereum) {
+        const web3Instance = new Web3(window.ethereum);
+        setWeb3(web3Instance);
+        try {
+          await window.ethereum.request({ method: 'eth_requestAccounts' });
+          const accounts = await web3Instance.eth.getAccounts();
+          setAccount(accounts[0]);
+
+          const contractAddress = '0x018617918B6a1F8B6BBBbD5b30bd3A15D4B48B10'; // Replace with your contract address
+          const contractInstance = new web3Instance.eth.Contract(contractABI, contractAddress);
+          setContract(contractInstance);
+
+          // Fetch active fundraisers from the contract
+          const fundraiserCount = await contractInstance.methods.fundraiserCounter().call();
+          const fetchedCampaigns = [];
+          for (let i = 0; i < fundraiserCount; i++) {
+            const fundraiser = await contractInstance.methods.getFundraiserDetails(i).call();
+            fetchedCampaigns.push({
+              id: i,
+              title: fundraiser.condition,
+              description: fundraiser.description,
+              targetAmount: web3Instance.utils.fromWei(fundraiser.targetAmount, 'ether'),
+              amountRaised: web3Instance.utils.fromWei(fundraiser.amountRaised, 'ether'),
+              completed: fundraiser.completed,
+            });
+          }
+          setCampaigns(fetchedCampaigns);
+        } catch (error) {
+          console.error('Error connecting to contract or fetching campaigns', error);
+        }
+      } else {
+        console.log('Please install MetaMask');
+      }
+    };
+
+    initWeb3();
+  }, []);
+
+  const handleDonate = (campaign) => {
+    setSelectedCampaign(campaign);
+    setShowModal(true);
+  };
+
+  const handleConfirmDonation = async () => {
+    if (!web3 || !contract || !account || !selectedCampaign) return;
+  
+    try {
+      const amountInWei = web3.utils.toWei(donationAmount, 'ether');
+      
+      console.log('Estimating gas...');
+      const gasEstimate = await contract.methods.donateToFundraiser(selectedCampaign.id).estimateGas({
+        from: account,
+        value: amountInWei
+      });
+      console.log('Gas estimate:', gasEstimate);
+  
+      console.log('Getting gas price...');
+      const gasPrice = await web3.eth.getGasPrice();
+      console.log('Gas price:', gasPrice);
+  
+      console.log('Sending transaction...');
+      const result = await contract.methods.donateToFundraiser(selectedCampaign.id).send({
+        from: account,
+        value: amountInWei,
+        gas: Math.round(gasEstimate * 1.2),
+        gasPrice: gasPrice
+      });
+      
+      console.log('Transaction result:', result);
+  
+      // ... rest of the function
+    } catch (error) {
+      console.error('Detailed error:', error);
+      if (error.message) console.error('Error message:', error.message);
+      if (error.stack) console.error('Error stack:', error.stack);
+      alert('Error making donation. Please check the console for more details.');
+    }
+  };
+
   return (
     <ThemeProvider theme={theme}>
       <Router>
         <AppContainer>
           <Navigation />
-
           <ContentContainer>
             <Routes>
               <Route path="/" element={
                 <>
                   <SectionTitle>Active Campaigns</SectionTitle>
                   <CampaignGrid>
-                    <CampaignCard>
-                      <CampaignTitle>Cancer Treatment for Sarah</CampaignTitle>
-                      <CampaignDescription>Help Sarah afford life-saving cancer treatment</CampaignDescription>
-                      <ProgressBar><Progress width="75%" /></ProgressBar>
-                      <CampaignInfo>75% funded, 14 days remaining</CampaignInfo>
-                    </CampaignCard>
-                    <CampaignCard>
-                      <CampaignTitle>Wheelchair for Michael</CampaignTitle>
-                      <CampaignDescription>Help Michael get the mobility he needs</CampaignDescription>
-                      <ProgressBar><Progress width="60%" /></ProgressBar>
-                      <CampaignInfo>60% funded, 21 days remaining</CampaignInfo>
-                    </CampaignCard>
-                    <CampaignCard>
-                      <CampaignTitle>Prosthetic Leg for Emily</CampaignTitle>
-                      <CampaignDescription>Help Emily regain her mobility</CampaignDescription>
-                      <ProgressBar><Progress width="38%" /></ProgressBar>
-                      <CampaignInfo>38% funded, 7 days remaining</CampaignInfo>
-                    </CampaignCard>
-                  </CampaignGrid>
-
-                  <SectionTitle>Top Campaigns</SectionTitle>
-                  <CampaignGrid>
-                    <CampaignCard>
-                      <CampaignTitle>Life-Saving Surgery for John</CampaignTitle>
-                      <CampaignDescription>Help John get the surgery he needs to survive</CampaignDescription>
-                      <ProgressBar><Progress width="100%" /></ProgressBar>
-                      <CampaignInfo>100% funded, Campaign Ended</CampaignInfo>
-                    </CampaignCard>
-                    <CampaignCard>
-                      <CampaignTitle>Mobility Assistance for Lisa</CampaignTitle>
-                      <CampaignDescription>Help Lisa regain her independence with a new wheelchair</CampaignDescription>
-                      <ProgressBar><Progress width="100%" /></ProgressBar>
-                      <CampaignInfo>100% funded, Campaign Ended</CampaignInfo>
-                    </CampaignCard>
+                    {campaigns.map((campaign, index) => (
+                      <CampaignCard key={index}>
+                        <CampaignTitle>{campaign.title}</CampaignTitle>
+                        <CampaignDescription>{campaign.description}</CampaignDescription>
+                        <ProgressBar>
+                          <Progress width={`${(campaign.amountRaised / campaign.targetAmount) * 100}%`} />
+                        </ProgressBar>
+                        <CampaignInfo>{((campaign.amountRaised / campaign.targetAmount) * 100).toFixed(2)}% funded</CampaignInfo>
+                        {!campaign.completed && (
+                          <DonateButton onClick={() => handleDonate(campaign)}>Donate</DonateButton>
+                        )}
+                      </CampaignCard>
+                    ))}
                   </CampaignGrid>
                 </>
               } />
@@ -127,6 +235,21 @@ export default function App() {
           </ContentContainer>
         </AppContainer>
       </Router>
+      {showModal && (
+        <Modal>
+          <ModalContent>
+            <h3>Donate to {selectedCampaign.title}</h3>
+            <Input
+              type="number"
+              placeholder="Amount in ETH"
+              value={donationAmount}
+              onChange={(e) => setDonationAmount(e.target.value)}
+            />
+            <DonateButton onClick={handleConfirmDonation}>Confirm Donation</DonateButton>
+            <DonateButton onClick={() => setShowModal(false)}>Cancel</DonateButton>
+          </ModalContent>
+        </Modal>
+      )}
     </ThemeProvider>
-  )
+  );
 }

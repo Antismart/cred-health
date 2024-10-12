@@ -85,11 +85,40 @@ const DonateButton = styled.button`
   }
 `;
 
+// New components for modal
+const Modal = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+`;
+
+const ModalContent = styled.div`
+  background-color: ${props => props.theme.colors.background};
+  padding: ${props => props.theme.spacing.large};
+  border-radius: ${props => props.theme.borderRadius.medium};
+  width: 300px;
+`;
+
+const Input = styled.input`
+  width: 100%;
+  padding: ${props => props.theme.spacing.small};
+  margin-bottom: ${props => props.theme.spacing.medium};
+`;
+
 export default function App() {
   const [campaigns, setCampaigns] = useState([]);
   const [web3, setWeb3] = useState(null);
   const [contract, setContract] = useState(null);
   const [account, setAccount] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [selectedCampaign, setSelectedCampaign] = useState(null);
+  const [donationAmount, setDonationAmount] = useState('');
 
   useEffect(() => {
     const initWeb3 = async () => {
@@ -101,7 +130,7 @@ export default function App() {
           const accounts = await web3Instance.eth.getAccounts();
           setAccount(accounts[0]);
 
-          const contractAddress = 'YOUR_CONTRACT_ADDRESS'; // Replace with your contract address
+          const contractAddress = '0x018617918B6a1F8B6BBBbD5b30bd3A15D4B48B10'; // Replace with your contract address
           const contractInstance = new web3Instance.eth.Contract(contractABI, contractAddress);
           setContract(contractInstance);
 
@@ -111,7 +140,8 @@ export default function App() {
           for (let i = 0; i < fundraiserCount; i++) {
             const fundraiser = await contractInstance.methods.getFundraiserDetails(i).call();
             fetchedCampaigns.push({
-              title: fundraiser.condition, // Replace with actual title/condition
+              id: i,
+              title: fundraiser.condition,
               description: fundraiser.description,
               targetAmount: web3Instance.utils.fromWei(fundraiser.targetAmount, 'ether'),
               amountRaised: web3Instance.utils.fromWei(fundraiser.amountRaised, 'ether'),
@@ -130,9 +160,45 @@ export default function App() {
     initWeb3();
   }, []);
 
-  const handleDonate = (campaignName) => {
-    alert(`You clicked Donate for ${campaignName}`);
-    // Logic for navigating to the donation page or handling the donation
+  const handleDonate = (campaign) => {
+    setSelectedCampaign(campaign);
+    setShowModal(true);
+  };
+
+  const handleConfirmDonation = async () => {
+    if (!web3 || !contract || !account || !selectedCampaign) return;
+  
+    try {
+      const amountInWei = web3.utils.toWei(donationAmount, 'ether');
+      
+      console.log('Estimating gas...');
+      const gasEstimate = await contract.methods.donateToFundraiser(selectedCampaign.id).estimateGas({
+        from: account,
+        value: amountInWei
+      });
+      console.log('Gas estimate:', gasEstimate);
+  
+      console.log('Getting gas price...');
+      const gasPrice = await web3.eth.getGasPrice();
+      console.log('Gas price:', gasPrice);
+  
+      console.log('Sending transaction...');
+      const result = await contract.methods.donateToFundraiser(selectedCampaign.id).send({
+        from: account,
+        value: amountInWei,
+        gas: Math.round(gasEstimate * 1.2),
+        gasPrice: gasPrice
+      });
+      
+      console.log('Transaction result:', result);
+  
+      // ... rest of the function
+    } catch (error) {
+      console.error('Detailed error:', error);
+      if (error.message) console.error('Error message:', error.message);
+      if (error.stack) console.error('Error stack:', error.stack);
+      alert('Error making donation. Please check the console for more details.');
+    }
   };
 
   return (
@@ -155,14 +221,13 @@ export default function App() {
                         </ProgressBar>
                         <CampaignInfo>{((campaign.amountRaised / campaign.targetAmount) * 100).toFixed(2)}% funded</CampaignInfo>
                         {!campaign.completed && (
-                          <DonateButton onClick={() => handleDonate(campaign.title)}>Donate</DonateButton>
+                          <DonateButton onClick={() => handleDonate(campaign)}>Donate</DonateButton>
                         )}
                       </CampaignCard>
                     ))}
                   </CampaignGrid>
                 </>
               } />
-              <Route path="/" element={<ActiveCampaigns />} />
               <Route path="/about-us" element={<AboutUs />} />
               <Route path="/dashboard" element={<DashBoard />} />
               <Route path="/create" element={<CreateFundraiser />} />
@@ -170,6 +235,21 @@ export default function App() {
           </ContentContainer>
         </AppContainer>
       </Router>
+      {showModal && (
+        <Modal>
+          <ModalContent>
+            <h3>Donate to {selectedCampaign.title}</h3>
+            <Input
+              type="number"
+              placeholder="Amount in ETH"
+              value={donationAmount}
+              onChange={(e) => setDonationAmount(e.target.value)}
+            />
+            <DonateButton onClick={handleConfirmDonation}>Confirm Donation</DonateButton>
+            <DonateButton onClick={() => setShowModal(false)}>Cancel</DonateButton>
+          </ModalContent>
+        </Modal>
+      )}
     </ThemeProvider>
   );
 }

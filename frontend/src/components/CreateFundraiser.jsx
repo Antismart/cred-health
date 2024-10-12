@@ -84,7 +84,6 @@ const SuccessMessage = styled.p`
   text-align: center;
 `;
 
-
 export default function CreateFundraiser() {
   const [userData, setUserData] = useState({
     userType: '',
@@ -112,7 +111,7 @@ export default function CreateFundraiser() {
           await window.ethereum.request({ method: 'eth_requestAccounts' });
           const accounts = await web3Instance.eth.getAccounts();
           setAccount(accounts[0]);
-          const contractAddress = '0x4ebcaf0bcc1110da7bfbae1cf631644be6edf8d1'; // Ensure this is the correct address
+          const contractAddress = '0x018617918B6a1F8B6BBBbD5b30bd3A15D4B48B10'; // Ensure this is the correct address
           const contractInstance = new web3Instance.eth.Contract(contractABI, contractAddress);
           setContract(contractInstance);
         } catch (error) {
@@ -141,44 +140,43 @@ export default function CreateFundraiser() {
     e.preventDefault();
     setError('');
     setSuccess('');
-
+  
     if (!web3 || !contract || !account) {
       setError('Web3 is not initialized. Please check your MetaMask connection.');
       return;
     }
-
+  
     try {
+      console.log('Starting user registration...');
+      console.log('User type:', userData.userType);
+      console.log('Condition:', userData.condition);
+      console.log('Hospital address:', userData.hospitalAddress);
+  
       const userType = parseInt(userData.userType);
-
-      // For Donors, send a default address; for Patients, validate the hospital address
-      const condition = userType === 0 ? userData.condition : '';
-      const hospitalAddress = userType === 0 ? userData.hospitalAddress : '0x0000000000000000000000000000000000000000';
-
-      // Ensure hospital address is valid for patients
-      if (userType === 0 && !web3.utils.isAddress(userData.hospitalAddress)) {
-        setError('Invalid hospital address. Please enter a valid Ethereum address.');
+  
+      if (userType === 0) {
+        console.log('Registering patient...');
+        const result = await contract.methods.registerPatient(userData.condition, userData.hospitalAddress).send({ from: account, gas: 300000 });
+        console.log('Patient registration result:', result);
+      } else if (userType === 1) {
+        console.log('Registering donor...');
+        const result = await contract.methods.registerDonor().send({ from: account, gas: 300000 });
+        console.log('Donor registration result:', result);
+      } else {
+        setError('Invalid user type selected.');
         return;
       }
-
-      const gasEstimate = await contract.methods.registerUser(
-        userType,
-        condition,
-        hospitalAddress
-      ).estimateGas({ from: account });
-
-      await contract.methods.registerUser(
-        userType,
-        condition,
-        hospitalAddress
-      ).send({ from: account, gas: gasEstimate });
-
+  
       setSuccess('User registered successfully!');
     } catch (error) {
-      console.error('Error registering user:', error);
-      setError(`Failed to register user: ${error.message}`);
+      console.error('Detailed error:', error);
+      if (error.message) {
+        setError(`Transaction failed: ${error.message}`);
+      } else {
+        setError('Transaction failed. Check console for details.');
+      }
     }
   };
-
   const handleFundraiserSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -191,11 +189,14 @@ export default function CreateFundraiser() {
 
     try {
       const targetAmount = web3.utils.toWei(fundraiserData.targetAmount, 'ether');
-      const gasEstimate = await contract.methods.createFundraiser(targetAmount, fundraiserData.description)
-        .estimateGas({ from: account });
+      const hospitalAddress = userData.hospitalAddress;
 
-      await contract.methods.createFundraiser(targetAmount, fundraiserData.description)
-        .send({ from: account, gas: gasEstimate });
+      if (!hospitalAddress || !web3.utils.isAddress(hospitalAddress)) {
+        setError('Valid hospital address is required.');
+        return;
+      }
+
+      await contract.methods.createFundraiser(targetAmount, fundraiserData.description, hospitalAddress).send({ from: account });
 
       setSuccess('Fundraiser created successfully!');
       setFundraiserData({ targetAmount: '', description: '' });
@@ -211,26 +212,24 @@ export default function CreateFundraiser() {
         <Title>User Registration</Title>
         <Form onSubmit={handleUserRegistration}>
           <Label htmlFor="userType">User Type</Label>
-          <select
+          <Select
             id="userType"
             name="userType"
             value={userData.userType}
             onChange={handleUserDataChange}
             required
             style={{
-              width: '100%',  // Adjust width to make it full width
-              padding: '10px',  // Adjust padding to make the input larger
-              fontSize: '16px', // Adjust font size for readability
-              borderRadius: '5px', // Optional: Rounded corners
-              border: '1px solid #ccc' // Optional: Border style
+              width: '100%',
+              padding: '10px',
+              fontSize: '16px',
+              borderRadius: '5px',
+              border: '1px solid #ccc',
             }}
           >
             <option value="">Select user type</option>
             <option value="0">Patient</option>
             <option value="1">Donor</option>
-          </select>
-
-
+          </Select>
 
           {/* Show condition and hospital address only if registering as a patient */}
           {userData.userType === '0' && (

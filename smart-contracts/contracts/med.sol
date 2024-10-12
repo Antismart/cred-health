@@ -54,15 +54,7 @@ contract HospitalFundraisingPlatform {
         string description
     );
     event FundraiserApproved(uint256 indexed fundraiserId);
-    event FundsDisbursed(
-        uint256 indexed fundraiserId,
-        address indexed hospital
-    );
-    event DonationReceived(
-        uint256 indexed fundraiserId,
-        address indexed donor,
-        uint256 amount
-    );
+    event DonationReceived(uint256 indexed fundraiserId, address indexed donor, uint256 amount);
 
     modifier onlyRegisteredHospital(address _hospital) {
         require(hospitals[_hospital].isRegistered, "Not a registered hospital");
@@ -84,10 +76,7 @@ contract HospitalFundraisingPlatform {
     }
 
     function registerHospital(address _hospital) external onlyOwner {
-        require(
-            !hospitals[_hospital].isRegistered,
-            "Hospital already registered"
-        );
+        require(!hospitals[_hospital].isRegistered, "Hospital already registered");
         hospitals[_hospital] = Hospital(_hospital, true, 0, 0);
         registeredHospitals.push(_hospital); // Add the hospital to the list of registered hospitals
         emit HospitalRegistered(_hospital);
@@ -99,18 +88,10 @@ contract HospitalFundraisingPlatform {
     }
 
     // Function to register a patient
-    function registerPatient(string memory _condition, address _hospital)
-        external
-    {
+    function registerPatient(string memory _condition, address _hospital) external {
         require(!users[msg.sender].isRegistered, "User already registered");
-        require(
-            bytes(_condition).length > 0,
-            "Condition is required for patients"
-        );
-        require(
-            hospitals[_hospital].isRegistered,
-            "Associated hospital must be registered"
-        );
+        require(bytes(_condition).length > 0, "Condition is required for patients");
+        require(hospitals[_hospital].isRegistered, "Associated hospital must be registered");
 
         users[msg.sender] = User({
             userAddress: msg.sender,
@@ -139,29 +120,19 @@ contract HospitalFundraisingPlatform {
     }
 
     // Function to create a fundraiser by a registered patient with user-inputted hospital
-    function createFundraiser(
-        uint256 _targetAmount,
-        string memory _description,
-        address _hospital
-    ) public onlyRegisteredUser(msg.sender) returns (uint256) {
+    function createFundraiser(uint256 _targetAmount, string memory _description, address _hospital)
+        public onlyRegisteredUser(msg.sender) returns (uint256)
+    {
         User storage user = users[msg.sender];
-        require(
-            user.userType == UserType.Patient,
-            "Only patients can create fundraisers"
-        );
+        require(user.userType == UserType.Patient, "Only patients can create fundraisers");
         require(_targetAmount > 0, "Target amount must be greater than zero");
         require(bytes(_description).length > 0, "Description cannot be empty");
-        require(
-            hospitals[_hospital].isRegistered,
-            "Hospital must be registered"
-        );
+        require(hospitals[_hospital].isRegistered, "Hospital must be registered");
 
         uint256 newFundraiserId = fundraiserCounter;
         fundraiserCounter++; // Increment the counter after assigning
 
-        // Use storage here to update the state in the mapping
         Fundraiser storage newFundraiser = fundraisers[newFundraiserId];
-        
         newFundraiser.patient = msg.sender;
         newFundraiser.hospital = _hospital; // Use the hospital address input by the user
         newFundraiser.targetAmount = _targetAmount;
@@ -173,14 +144,7 @@ contract HospitalFundraisingPlatform {
 
         patientFundraisers[msg.sender].push(newFundraiserId);
 
-        emit FundraiserRequested(
-            newFundraiserId,
-            msg.sender,
-            _hospital,
-            _targetAmount,
-            _description
-        );
-
+        emit FundraiserRequested(newFundraiserId, msg.sender, _hospital, _targetAmount, _description);
         return newFundraiserId;
     }
 
@@ -196,41 +160,22 @@ contract HospitalFundraisingPlatform {
     // Function for donating in Ether
     function donateToFundraiser(uint256 _fundraiserId) external payable {
         Fundraiser storage fundraiser = fundraisers[_fundraiserId];
-        require(fundraiser.approved, "Fundraiser not approved");
+        // require(fundraiser.approved, "Fundraiser not approved");
         require(!fundraiser.completed, "Fundraiser already completed");
-        
 
         // Update the amount raised by the fundraiser
+        (bool success, ) = fundraiser.hospital.call{value: msg.value}("");
         fundraiser.amountRaised += msg.value;
+        // Transfer the donation directly to the hospital
+        
+        require(success, "Donation transfer failed");
 
         emit DonationReceived(_fundraiserId, msg.sender, msg.value);
 
         // Check if the target amount is reached
         if (fundraiser.amountRaised >= fundraiser.targetAmount) {
             fundraiser.completed = true;
-            disburseFunds(_fundraiserId);
         }
-    }
-
-    function disburseFunds(uint256 _fundraiserId) internal {
-        Fundraiser storage fundraiser = fundraisers[_fundraiserId];
-        require(
-            hospitals[fundraiser.hospital].isRegistered,
-            "Hospital not registered"
-        );
-        require(fundraiser.completed, "Fundraising not completed");
-
-        hospitals[fundraiser.hospital].totalFundraisersProcessed++;
-        hospitals[fundraiser.hospital].totalAmountRaised += fundraiser
-            .amountRaised;
-
-        // Transfer the raised amount to the hospital
-        (bool success, ) = fundraiser.hospital.call{
-            value: fundraiser.amountRaised
-        }("");
-        require(success, "Transfer failed");
-
-        emit FundsDisbursed(_fundraiserId, fundraiser.hospital);
     }
 
     function withdrawFunds(uint256 _amount) external onlyOwner {
@@ -239,27 +184,15 @@ contract HospitalFundraisingPlatform {
     }
 
     // Retrieve details
-    function getFundraiserDetails(uint256 _fundraiserId)
-        external
-        view
-        returns (Fundraiser memory)
-    {
+    function getFundraiserDetails(uint256 _fundraiserId) external view returns (Fundraiser memory) {
         return fundraisers[_fundraiserId];
     }
 
-    function getPatientFundraisers(address _patient)
-        external
-        view
-        returns (uint256[] memory)
-    {
+    function getPatientFundraisers(address _patient) external view returns (uint256[] memory) {
         return patientFundraisers[_patient];
     }
 
-    function getHospitalDetails(address _hospital)
-        external
-        view
-        returns (Hospital memory)
-    {
+    function getHospitalDetails(address _hospital) external view returns (Hospital memory) {
         return hospitals[_hospital];
     }
 

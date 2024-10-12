@@ -33,7 +33,7 @@ const CampaignGrid = styled.div`
   gap: ${props => props.theme.spacing.large};
 `;
 
-const CampaignCard = styled.div`
+const CampaignCardWrapper = styled.div`
   background-color: ${props => props.theme.colors.secondaryBackground};
   border-radius: ${props => props.theme.borderRadius.medium};
   padding: ${props => props.theme.spacing.large};
@@ -64,7 +64,7 @@ const ProgressBar = styled.div`
 const Progress = styled.div`
   background-color: ${props => props.theme.colors.primary};
   height: 100%;
-  width: ${props => props.width};
+  width: ${props => props.width}%;
 `;
 
 const CampaignInfo = styled.div`
@@ -85,7 +85,6 @@ const DonateButton = styled.button`
   }
 `;
 
-// New components for modal
 const Modal = styled.div`
   position: fixed;
   top: 0;
@@ -130,7 +129,7 @@ export default function App() {
           const accounts = await web3Instance.eth.getAccounts();
           setAccount(accounts[0]);
 
-          const contractAddress = '0x018617918B6a1F8B6BBBbD5b30bd3A15D4B48B10'; // Replace with your contract address
+          const contractAddress = '0x60694B2b73B250A6DF1D65873d51EAe79FCaaB91'; // Replace with your contract address
           const contractInstance = new web3Instance.eth.Contract(contractABI, contractAddress);
           setContract(contractInstance);
 
@@ -167,36 +166,45 @@ export default function App() {
 
   const handleConfirmDonation = async () => {
     if (!web3 || !contract || !account || !selectedCampaign) return;
-  
+
     try {
       const amountInWei = web3.utils.toWei(donationAmount, 'ether');
-      
+
       console.log('Estimating gas...');
       const gasEstimate = await contract.methods.donateToFundraiser(selectedCampaign.id).estimateGas({
         from: account,
         value: amountInWei
       });
-      console.log('Gas estimate:', gasEstimate);
-  
+      console.log('Gas estimate:', gasEstimate.toString());
+
       console.log('Getting gas price...');
       const gasPrice = await web3.eth.getGasPrice();
-      console.log('Gas price:', gasPrice);
-  
+      console.log('Gas price:', gasPrice.toString());
+
+      const gasLimit = BigInt(gasEstimate) * BigInt(120) / BigInt(100);
+
       console.log('Sending transaction...');
       const result = await contract.methods.donateToFundraiser(selectedCampaign.id).send({
         from: account,
         value: amountInWei,
-        gas: Math.round(gasEstimate * 1.2),
+        gas: gasLimit.toString(),
         gasPrice: gasPrice
       });
-      
+
       console.log('Transaction result:', result);
-  
-      // ... rest of the function
+
+      const updatedCampaigns = campaigns.map(c =>
+        c.id === selectedCampaign.id
+          ? { ...c, amountRaised: (BigInt(web3.utils.toWei(c.amountRaised, 'ether')) + BigInt(amountInWei)).toString() }
+          : c
+      );
+      setCampaigns(updatedCampaigns);
+
+      setShowModal(false);
+      setDonationAmount('');
+      alert('Donation successful!');
     } catch (error) {
       console.error('Detailed error:', error);
-      if (error.message) console.error('Error message:', error.message);
-      if (error.stack) console.error('Error stack:', error.stack);
       alert('Error making donation. Please check the console for more details.');
     }
   };
@@ -208,26 +216,19 @@ export default function App() {
           <Navigation />
           <ContentContainer>
             <Routes>
-              <Route path="/" element={
-                <>
-                  <SectionTitle>Active Campaigns</SectionTitle>
-                  <CampaignGrid>
-                    {campaigns.map((campaign, index) => (
-                      <CampaignCard key={index}>
-                        <CampaignTitle>{campaign.title}</CampaignTitle>
-                        <CampaignDescription>{campaign.description}</CampaignDescription>
-                        <ProgressBar>
-                          <Progress width={`${(campaign.amountRaised / campaign.targetAmount) * 100}%`} />
-                        </ProgressBar>
-                        <CampaignInfo>{((campaign.amountRaised / campaign.targetAmount) * 100).toFixed(2)}% funded</CampaignInfo>
-                        {!campaign.completed && (
-                          <DonateButton onClick={() => handleDonate(campaign)}>Donate</DonateButton>
-                        )}
-                      </CampaignCard>
-                    ))}
-                  </CampaignGrid>
-                </>
-              } />
+              <Route
+                path="/"
+                element={
+                  <>
+                    <SectionTitle>Active Campaigns</SectionTitle>
+                    <CampaignGrid>
+                      {campaigns.map((campaign, index) => (
+                        <CampaignCard key={index} campaign={campaign} web3={web3} handleDonate={handleDonate} />
+                      ))}
+                    </CampaignGrid>
+                  </>
+                }
+              />
               <Route path="/about-us" element={<AboutUs />} />
               <Route path="/dashboard" element={<DashBoard />} />
               <Route path="/create" element={<CreateFundraiser />} />
@@ -241,6 +242,8 @@ export default function App() {
             <h3>Donate to {selectedCampaign.title}</h3>
             <Input
               type="number"
+              step="0.000000000000000001"
+              min="0"
               placeholder="Amount in ETH"
               value={donationAmount}
               onChange={(e) => setDonationAmount(e.target.value)}
@@ -253,3 +256,34 @@ export default function App() {
     </ThemeProvider>
   );
 }
+
+const CampaignCard = ({ campaign, web3, handleDonate }) => {
+  const calculateProgressPercentage = () => {
+    if (!web3) return 0;
+
+    const amountRaised = BigInt(web3.utils.toWei(campaign.amountRaised, 'ether'));
+    const targetAmount = BigInt(web3.utils.toWei(campaign.targetAmount, 'ether'));
+
+    if (targetAmount === BigInt(0)) return 0;
+
+    const progressPercentage = Number((amountRaised * BigInt(10000)) / targetAmount) / 100;
+    return Math.min(progressPercentage, 100);
+  };
+
+  const progressPercentage = calculateProgressPercentage();
+
+  return (
+    <CampaignCardWrapper>
+      <CampaignTitle>{campaign.title}</CampaignTitle>
+      <CampaignDescription>{campaign.description}</CampaignDescription>
+      <ProgressBar>
+        <Progress width={progressPercentage} />
+      </ProgressBar>
+      <CampaignInfo>{progressPercentage.toFixed(2)}% funded</CampaignInfo>
+      <CampaignInfo>
+        {parseFloat(campaign.amountRaised).toFixed(4)} / {parseFloat(campaign.targetAmount).toFixed(4)} ETH raised
+      </CampaignInfo>
+      {!campaign.completed && <DonateButton onClick={() => handleDonate(campaign)}>Donate</DonateButton>}
+    </CampaignCardWrapper>
+  );
+};

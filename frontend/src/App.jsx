@@ -7,6 +7,8 @@ import AboutUs from './components/AboutUs';
 import DashBoard from './components/DashBoard';
 import CreateFundraiser from './components/CreateFundraiser';
 import ActiveCampaigns from './components/ActiveCampaigns';
+import LandingPage from './components/LandingPage';
+
 import theme from './theme';
 import './App.css';
 import contractABI from './contracts/abi/med.json';
@@ -216,8 +218,9 @@ export default function App() {
           <Navigation />
           <ContentContainer>
             <Routes>
+              <Route path="/" element={<LandingPage />} />
               <Route
-                path="/"
+                path="/campaigns"
                 element={
                   <>
                     <SectionTitle>Active Campaigns</SectionTitle>
@@ -232,6 +235,7 @@ export default function App() {
               <Route path="/about-us" element={<AboutUs />} />
               <Route path="/dashboard" element={<DashBoard />} />
               <Route path="/create" element={<CreateFundraiser />} />
+              {/* <Route path="*" element={<Navigate to="/" replace />} /> */}
             </Routes>
           </ContentContainer>
         </AppContainer>

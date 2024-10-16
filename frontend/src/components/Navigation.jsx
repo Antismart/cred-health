@@ -2,9 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import Web3 from 'web3';
+import { LuLogIn } from "react-icons/lu";
 import logo from "../../assets/crowdlogo.png";
 import backgroundImage from "../../assets/Landing.png";
+import { WalletConnected } from "../utils/WalletConnected";
 
+import { useWalletInfo, useWeb3Modal, useWeb3ModalAccount } from "@web3modal/ethers/react";
 const Nav = styled.nav`
   background-image: url(${backgroundImage});
   background-size: cover;
@@ -14,9 +17,9 @@ const Nav = styled.nav`
   justify-content: space-between;
   align-items: center;
   position: relative;
-  height: 74px; // Adjust this value to match exactly with your design
-  margin-bottom: 0; // Ensure there's no bottom margin
-  border-bottom: none; // Remove any border if present
+  height: 74px;
+  margin-bottom: 0;
+  border-bottom: none;
 
   &::before {
     content: '';
@@ -45,7 +48,7 @@ const Logo = styled(Link)`
   text-decoration: none;
   font-size: 1.5rem;
   font-weight: bold;
-  color: #3498db; // Bright blue for the logo text
+  color: #3498db;
 `;
 
 const LogoImage = styled.img`
@@ -74,7 +77,7 @@ const NavLink = styled(Link)`
 `;
 
 const Button = styled.button`
-  background-color: #3498db; // Bright blue to match the logo
+  background-color: #3498db;
   color: white;
   border: none;
   padding: 0.5rem 1.5rem;
@@ -95,12 +98,17 @@ export default function Navigation() {
   const [account, setAccount] = useState(null);
   const navigate = useNavigate();
 
+  // Use web3Modal's hooks
+  const { open } = useWeb3Modal();
+  const { address, isConnected } = useWeb3ModalAccount();
+  const { walletInfo } = useWalletInfo();
+
   useEffect(() => {
     const initWeb3 = async () => {
       if (window.ethereum) {
         const web3Instance = new Web3(window.ethereum);
         setWeb3(web3Instance);
-        
+
         try {
           const accounts = await web3Instance.eth.getAccounts();
           if (accounts.length > 0) {
@@ -134,31 +142,10 @@ export default function Navigation() {
     };
   }, []);
 
-  const connectWallet = async () => {
-    if (web3) {
-      try {
-        await window.ethereum.request({ method: 'eth_requestAccounts' });
-        const accounts = await web3.eth.getAccounts();
-        setAccount(accounts[0]);
-      } catch (error) {
-        console.error("Failed to connect wallet:", error);
-      }
-    } else {
-      console.log('Please install MetaMask!');
-    }
-  };
-
   const handleLogout = () => {
-    // Clear the account state
     setAccount(null);
-
-    // Clear any user-related data from localStorage
     localStorage.removeItem('userWalletAddress');
-    // Add any other user-related items you want to clear
-
-    // Optionally, you can redirect the user to the home page or login page
     navigate('/');
-
     console.log("Logged out successfully");
   };
 
@@ -175,13 +162,16 @@ export default function Navigation() {
           <NavLink to="/dashboard">Dashboard</NavLink>
           <NavLink to="/about-us">About</NavLink>
         </NavLinks>
-        {account ? (
-          <Button onClick={handleLogout}>
-            {account.slice(0, 6)}...{account.slice(-4)} (Logout)
-          </Button>
-        ) : (
-          <Button onClick={connectWallet}>Connect Wallet</Button>
-        )}
+        <Button onClick={() => open()}>
+          {isConnected ? (
+            <WalletConnected address={address} icon={walletInfo?.icon} />
+          ) : (
+            <>
+              <span>Connect Wallet</span>
+              <LuLogIn className="text-lg hidden md:flex" />
+            </>
+          )}
+        </Button>
       </NavContent>
     </Nav>
   );

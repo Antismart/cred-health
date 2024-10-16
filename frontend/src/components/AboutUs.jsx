@@ -1,6 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
-import backgroundImage from "../../assets/Landing2.png";
+import backgroundImage from "../../assets/landing2.png";
 
 const AboutContainer = styled.div`
   padding: ${props => props.theme.spacing.large};

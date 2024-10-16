@@ -8,10 +8,15 @@ import DashBoard from './components/DashBoard';
 import CreateFundraiser from './components/CreateFundraiser';
 import ActiveCampaigns from './components/ActiveCampaigns';
 import LandingPage from './components/LandingPage';
+import { configWeb3Modal } from "./connection";
 
 import theme from './theme';
 import './App.css';
 import contractABI from './contracts/abi/med.json';
+
+
+//web3 Modal configuration function call
+configWeb3Modal();
 
 const AppContainer = styled.div`
   background-color: ${props => props.theme.colors.background};
@@ -35,82 +40,7 @@ const CampaignGrid = styled.div`
   gap: ${props => props.theme.spacing.large};
 `;
 
-const CampaignCardWrapper = styled.div`
-  background-color: ${props => props.theme.colors.secondaryBackground};
-  border-radius: ${props => props.theme.borderRadius.medium};
-  padding: ${props => props.theme.spacing.large};
-  &:hover {
-    transform: scale(1.02);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  }
-`;
 
-const CampaignTitle = styled.h3`
-  color: ${props => props.theme.colors.text};
-  margin-bottom: ${props => props.theme.spacing.small};
-`;
-
-const CampaignDescription = styled.p`
-  color: ${props => props.theme.colors.secondaryText};
-  margin-bottom: ${props => props.theme.spacing.small};
-`;
-
-const ProgressBar = styled.div`
-  background-color: ${props => props.theme.colors.progressBackground};
-  border-radius: ${props => props.theme.borderRadius.small};
-  height: 8px;
-  margin-bottom: ${props => props.theme.spacing.small};
-  overflow: hidden;
-`;
-
-const Progress = styled.div`
-  background-color: ${props => props.theme.colors.primary};
-  height: 100%;
-  width: ${props => props.width}%;
-`;
-
-const CampaignInfo = styled.div`
-  color: ${props => props.theme.colors.secondaryText};
-  font-size: 0.9em;
-`;
-
-const DonateButton = styled.button`
-  margin-top: ${props => props.theme.spacing.small};
-  padding: ${props => props.theme.spacing.small} ${props => props.theme.spacing.medium};
-  background-color: ${props => props.theme.colors.primary};
-  color: ${props => props.theme.colors.text};
-  border: none;
-  border-radius: ${props => props.theme.borderRadius.small};
-  cursor: pointer;
-  &:hover {
-    background-color: ${props => props.theme.colors.primaryHover};
-  }
-`;
-
-const Modal = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-`;
-
-const ModalContent = styled.div`
-  background-color: ${props => props.theme.colors.background};
-  padding: ${props => props.theme.spacing.large};
-  border-radius: ${props => props.theme.borderRadius.medium};
-  width: 300px;
-`;
-
-const Input = styled.input`
-  width: 100%;
-  padding: ${props => props.theme.spacing.small};
-  margin-bottom: ${props => props.theme.spacing.medium};
-`;
 
 export default function App() {
   const [campaigns, setCampaigns] = useState([]);

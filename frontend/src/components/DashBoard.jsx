@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, gql } from '@apollo/client';
 import Web3 from 'web3';
+import { Button } from './ui/Button';
+import { LuLogIn } from "react-icons/lu";
+import { WalletConnected } from "../utils/WalletConnected";
+import { useWalletInfo, useWeb3Modal, useWeb3ModalAccount } from "@web3modal/ethers/react";
 
 const GET_USER_DATA = gql`
   query GetUserData($userAddress: Bytes!) {
@@ -29,6 +33,11 @@ const Dashboard = () => {
   const [account, setAccount] = useState(null);
   const [web3, setWeb3] = useState(null);
 
+  const { open } = useWeb3Modal()
+  const { address, isConnected } = useWeb3ModalAccount()
+  const { walletInfo } = useWalletInfo()
+
+
   const { loading, error, data } = useQuery(GET_USER_DATA, {
     variables: { userAddress: account?.toLowerCase() },
     skip: !account,
@@ -56,19 +65,19 @@ const Dashboard = () => {
     initWeb3();
   }, []);
 
-  const connectWallet = async () => {
-    if (web3) {
-      try {
-        await window.ethereum.request({ method: 'eth_requestAccounts' });
-        const accounts = await web3.eth.getAccounts();
-        setAccount(accounts[0]);
-      } catch (error) {
-        console.error("Failed to connect wallet:", error);
-      }
-    } else {
-      console.log('Please install MetaMask!');
-    }
-  };
+  // const connectWallet = async () => {
+  //   if (web3) {
+  //     try {
+  //       await window.ethereum.request({ method: 'eth_requestAccounts' });
+  //       const accounts = await web3.eth.getAccounts();
+  //       setAccount(accounts[0]);
+  //     } catch (error) {
+  //       console.error("Failed to connect wallet:", error);
+  //     }
+  //   } else {
+  //     console.log('Please install MetaMask!');
+  //   }
+  // };
 
   const renderUserInfo = () => {
     if (!data?.user) return null;
@@ -116,7 +125,16 @@ const Dashboard = () => {
       {!account ? (
         <div style={{ textAlign: 'center' }}>
           <p style={{ marginBottom: '16px' }}>Connect your wallet to access your fundraisers, track donations, and manage your account.</p>
-          <button onClick={connectWallet} style={{ padding: '8px 16px', backgroundColor: '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Connect Wallet</button>
+          {/* <button onClick={connectWallet} style={{ padding: '8px 16px', backgroundColor: '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Connect Wallet</button> */}
+
+          <Button onClick={() => open()} className="text-gray-200 text-sm font-barlow px-4 py-2 flex justify-center items-center gap-1 bg-sky-600 hover:bg-emerald-500">
+            {
+              isConnected ? <WalletConnected address={address} icon={walletInfo?.icon} /> : <>
+                <span>Connect Wallet</span>
+                <LuLogIn className="text-lg hidden md:flex" />
+              </>
+            }
+          </Button>
         </div>
       ) : (
         <div>

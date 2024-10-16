@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import backgroundImage from '/assets/Landing.png';
+// import { Button } from './ui/Button';
 
 const Button = ({ children, primary, to, withAnimation }) => (
   <div style={{ position: 'relative', display: 'inline-block', margin: '10px' }}>

@@ -53,9 +53,9 @@ export default function App() {
       const web3Instance = new Web3(new Web3.providers.HttpProvider('https://mainnet.infura.io/v3/YOUR_INFURA_KEY'));
       setWeb3(web3Instance);
 
-      const contractAddress = '0x60694B2b73B250A6DF1D65873d51EAe79FCaaB91';
-      const contractInstance = new web3Instance.eth.Contract(contractABI, contractAddress);
-      setContract(contractInstance);
+          const contractAddress = '0x60694B2b73B250A6DF1D65873d51EAe79FCaaB91'; // Replace with your contract address
+          const contractInstance = new web3Instance.eth.Contract(contractABI, contractAddress);
+          setContract(contractInstance);
 
       try {
         // Fetch active fundraisers from the contract

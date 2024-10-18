@@ -189,8 +189,7 @@ export default function CreateFundraiser() {
         try {
           const accounts = await web3Instance.eth.getAccounts();
           setAccount(accounts[0]);
-          
-          const contractAddress = '0x60694B2b73B250A6DF1D65873d51EAe79FCaaB91';
+          const contractAddress = '0x60694B2b73B250A6DF1D65873d51EAe79FCaaB91'; // Ensure this is the correct address
           const contractInstance = new web3Instance.eth.Contract(contractABI, contractAddress);
           setContract(contractInstance);
         } catch (error) {

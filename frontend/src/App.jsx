@@ -14,8 +14,7 @@ import theme from './theme';
 import './App.css';
 import contractABI from './contracts/abi/med.json';
 
-
-//web3 Modal configuration function call
+// web3 Modal configuration function call
 configWeb3Modal();
 
 const AppContainer = styled.div`
@@ -40,55 +39,46 @@ const CampaignGrid = styled.div`
   gap: ${props => props.theme.spacing.large};
 `;
 
-
-
 export default function App() {
   const [campaigns, setCampaigns] = useState([]);
   const [web3, setWeb3] = useState(null);
   const [contract, setContract] = useState(null);
-  const [account, setAccount] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [selectedCampaign, setSelectedCampaign] = useState(null);
   const [donationAmount, setDonationAmount] = useState('');
 
   useEffect(() => {
-    const initWeb3 = async () => {
-      if (window.ethereum) {
-        const web3Instance = new Web3(window.ethereum);
-        setWeb3(web3Instance);
-        try {
-          await window.ethereum.request({ method: 'eth_requestAccounts' });
-          const accounts = await web3Instance.eth.getAccounts();
-          setAccount(accounts[0]);
+    const initWeb3AndContract = async () => {
+      // Initialize read-only Web3 instance for viewing campaigns
+      const web3Instance = new Web3(new Web3.providers.HttpProvider('https://mainnet.infura.io/v3/YOUR_INFURA_KEY'));
+      setWeb3(web3Instance);
 
-          const contractAddress = '0x60694B2b73B250A6DF1D65873d51EAe79FCaaB91'; // Replace with your contract address
-          const contractInstance = new web3Instance.eth.Contract(contractABI, contractAddress);
-          setContract(contractInstance);
+      const contractAddress = '0x60694B2b73B250A6DF1D65873d51EAe79FCaaB91';
+      const contractInstance = new web3Instance.eth.Contract(contractABI, contractAddress);
+      setContract(contractInstance);
 
-          // Fetch active fundraisers from the contract
-          const fundraiserCount = await contractInstance.methods.fundraiserCounter().call();
-          const fetchedCampaigns = [];
-          for (let i = 0; i < fundraiserCount; i++) {
-            const fundraiser = await contractInstance.methods.getFundraiserDetails(i).call();
-            fetchedCampaigns.push({
-              id: i,
-              title: fundraiser.condition,
-              description: fundraiser.description,
-              targetAmount: web3Instance.utils.fromWei(fundraiser.targetAmount, 'ether'),
-              amountRaised: web3Instance.utils.fromWei(fundraiser.amountRaised, 'ether'),
-              completed: fundraiser.completed,
-            });
-          }
-          setCampaigns(fetchedCampaigns);
-        } catch (error) {
-          console.error('Error connecting to contract or fetching campaigns', error);
+      try {
+        // Fetch active fundraisers from the contract
+        const fundraiserCount = await contractInstance.methods.fundraiserCounter().call();
+        const fetchedCampaigns = [];
+        for (let i = 0; i < fundraiserCount; i++) {
+          const fundraiser = await contractInstance.methods.getFundraiserDetails(i).call();
+          fetchedCampaigns.push({
+            id: i,
+            title: fundraiser.condition,
+            description: fundraiser.description,
+            targetAmount: web3Instance.utils.fromWei(fundraiser.targetAmount, 'ether'),
+            amountRaised: web3Instance.utils.fromWei(fundraiser.amountRaised, 'ether'),
+            completed: fundraiser.completed,
+          });
         }
-      } else {
-        console.log('Please install MetaMask');
+        setCampaigns(fetchedCampaigns);
+      } catch (error) {
+        console.error('Error fetching campaigns', error);
       }
     };
 
-    initWeb3();
+    initWeb3AndContract();
   }, []);
 
   const handleDonate = (campaign) => {
@@ -97,22 +87,28 @@ export default function App() {
   };
 
   const handleConfirmDonation = async () => {
-    if (!web3 || !contract || !account || !selectedCampaign) return;
+    if (!web3 || !contract || !selectedCampaign) return;
 
     try {
       const amountInWei = web3.utils.toWei(donationAmount, 'ether');
+      
+      // Get the connected account from Web3Modal provider
+      const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+      if (!accounts || accounts.length === 0) {
+        alert('Please connect your wallet first');
+        return;
+      }
+      const account = accounts[0];
 
       console.log('Estimating gas...');
       const gasEstimate = await contract.methods.donateToFundraiser(selectedCampaign.id).estimateGas({
         from: account,
         value: amountInWei
       });
-      console.log('Gas estimate:', gasEstimate.toString());
-
+      
       console.log('Getting gas price...');
       const gasPrice = await web3.eth.getGasPrice();
-      console.log('Gas price:', gasPrice.toString());
-
+      
       const gasLimit = BigInt(gasEstimate) * BigInt(120) / BigInt(100);
 
       console.log('Sending transaction...');
@@ -165,7 +161,6 @@ export default function App() {
               <Route path="/about-us" element={<AboutUs />} />
               <Route path="/dashboard" element={<DashBoard />} />
               <Route path="/create" element={<CreateFundraiser />} />
-              {/* <Route path="*" element={<Navigate to="/" replace />} /> */}
             </Routes>
           </ContentContainer>
         </AppContainer>

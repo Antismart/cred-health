@@ -3,79 +3,96 @@ import Web3 from 'web3';
 import styled from 'styled-components';
 import contractABI from '../contracts/abi/med.json';
 
-// Styled Components for the UI
 const PageContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${(props) => props.theme.spacing.large};
-  max-width: 600px;
+  max-width: 1200px;
   margin: 0 auto;
+  padding: 20px;
+  color: white;
+`;
+
+const ContentWrapper = styled.div`
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
 `;
 
 const CampaignGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: ${(props) => props.theme.spacing.large};
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1.5rem;
 `;
 
 const CampaignCard = styled.div`
-  background-color: ${(props) => props.theme.colors.secondaryBackground};
-  border-radius: ${(props) => props.theme.borderRadius.medium};
-  padding: ${(props) => props.theme.spacing.large};
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  aspect-ratio: 1 / 1;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 
   &:hover {
-    transform: scale(1.02);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
   }
 `;
 
 const CampaignTitle = styled.h3`
-  color: ${(props) => props.theme.colors.text};
-  margin-bottom: ${(props) => props.theme.spacing.small};
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: white;
+  margin-bottom: 0.5rem;
 `;
 
 const CampaignDescription = styled.p`
-  color: ${(props) => props.theme.colors.secondaryText};
-  margin-bottom: ${(props) => props.theme.spacing.small};
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 1rem;
 `;
 
 const ProgressBar = styled.div`
-  background-color: ${(props) => props.theme.colors.progressBackground};
-  border-radius: ${(props) => props.theme.borderRadius.small};
+  background-color: rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
   height: 8px;
-  margin-bottom: ${(props) => props.theme.spacing.small};
   overflow: hidden;
+  margin-bottom: 0.5rem;
 `;
 
 const Progress = styled.div`
-  background-color: ${(props) => props.theme.colors.primary};
+  background-color: #4CAF50;
   height: 100%;
-  width: ${(props) => props.width};
+  width: ${props => props.width};
 `;
 
 const CampaignInfo = styled.div`
-  color: ${(props) => props.theme.colors.secondaryText};
-  font-size: 0.9em;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 1rem;
 `;
 
 const Button = styled.button`
-  padding: ${(props) => props.theme.spacing.small} ${(props) => props.theme.spacing.medium};
-  background-color: ${(props) => props.theme.colors.primary};
-  color: ${(props) => props.theme.colors.text};
+  padding: 0.5rem 1rem;
+  background-color: #2196f3;
+  color: white;
   border: none;
-  border-radius: ${(props) => props.theme.borderRadius.small};
+  border-radius: 4px;
   cursor: pointer;
-  font-weight: bold;
+  font-weight: 500;
   transition: background-color 0.3s ease;
   
   &:hover {
-    background-color: ${(props) => props.theme.colors.primaryHover};
+    background-color: #1976d2;
   }
 `;
 
 const ErrorMessage = styled.p`
-  color: red;
+  color: #f44336;
   text-align: center;
+  font-size: 1rem;
+  margin-bottom: 1rem;
 `;
 
 export default function ActiveCampaigns() {
@@ -94,7 +111,7 @@ export default function ActiveCampaigns() {
           await window.ethereum.request({ method: 'eth_requestAccounts' });
           const accounts = await web3Instance.eth.getAccounts();
           setAccount(accounts[0]);
-          const contractAddress = '0x60694B2b73B250A6DF1D65873d51EAe79FCaaB91'; // Ensure this is the correct address
+          const contractAddress = '0xfbfEfD8C66FeaeD1F0207FBa7262855799b0e59e';
           const contractInstance = new web3Instance.eth.Contract(contractABI, contractAddress);
           setContract(contractInstance);
           await fetchActiveCampaigns(contractInstance);
@@ -110,11 +127,9 @@ export default function ActiveCampaigns() {
     initWeb3();
   }, []);
 
-  // Function to fetch active campaigns from the smart contract
   const fetchActiveCampaigns = async (contractInstance) => {
     try {
       const fundraiserCounter = await contractInstance.methods.fundraiserCounter().call();
-
       const campaigns = [];
       for (let i = 0; i < fundraiserCounter; i++) {
         const fundraiser = await contractInstance.methods.getFundraiserDetails(i).call();
@@ -133,7 +148,6 @@ export default function ActiveCampaigns() {
       return;
     }
     try {
-      // Allow users to donate 0.01 ETH for demo purposes (adjust as needed)
       const donationAmount = web3.utils.toWei('0.01', 'ether');
       await contract.methods.donateToFundraiser(fundraiserId).send({ from: account, value: donationAmount });
       alert('Donation successful!');
@@ -145,25 +159,28 @@ export default function ActiveCampaigns() {
 
   return (
     <PageContainer>
-      {error && <ErrorMessage>{error}</ErrorMessage>}
-
-      <CampaignGrid>
-        {campaigns.map((campaign, index) => (
-          <CampaignCard key={index}>
-            <CampaignTitle>{campaign.description}</CampaignTitle>
-            <CampaignDescription>Condition: {campaign.condition}</CampaignDescription>
-            <ProgressBar>
-              <Progress width={`${(campaign.amountRaised / campaign.targetAmount) * 100}%`} />
-            </ProgressBar>
-            <CampaignInfo>
-              {web3.utils.fromWei(campaign.amountRaised, 'ether')} ETH raised of {web3.utils.fromWei(campaign.targetAmount, 'ether')} ETH target
-            </CampaignInfo>
-            {!campaign.completed && (
-              <Button onClick={() => handleDonate(index)}>Donate</Button>
-            )}
-          </CampaignCard>
-        ))}
-      </CampaignGrid>
+      <ContentWrapper>
+        {error && <ErrorMessage>{error}</ErrorMessage>}
+        <CampaignGrid>
+          {campaigns.map((campaign, index) => (
+            <CampaignCard key={index}>
+              <div>
+                <CampaignTitle>{campaign.description}</CampaignTitle>
+                <CampaignDescription>Condition: {campaign.condition}</CampaignDescription>
+                <ProgressBar>
+                  <Progress width={`${(campaign.amountRaised / campaign.targetAmount) * 100}%`} />
+                </ProgressBar>
+                <CampaignInfo>
+                  {web3 && `${web3.utils.fromWei(campaign.amountRaised, 'ether')} ETH raised of ${web3.utils.fromWei(campaign.targetAmount, 'ether')} ETH target`}
+                </CampaignInfo>
+              </div>
+              {!campaign.completed && (
+                <Button onClick={() => handleDonate(index)}>Donate</Button>
+              )}
+            </CampaignCard>
+          ))}
+        </CampaignGrid>
+      </ContentWrapper>
     </PageContainer>
   );
 }

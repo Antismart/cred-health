@@ -6,83 +6,21 @@ import Navigation from './components/Navigation';
 import AboutUs from './components/AboutUs';
 import DashBoard from './components/DashBoard';
 import CreateFundraiser from './components/CreateFundraiser';
-import ActiveCampaigns from './components/ActiveCampaigns';
+import LandingPage from './components/LandingPage';
+import { configWeb3Modal } from "./connection";
 import theme from './theme';
 import './App.css';
 import contractABI from './contracts/abi/med.json';
+import Layout from './layout';
+import ActiveCampaigns from './components/ActiveCampaigns';
+
+configWeb3Modal();
 
 const AppContainer = styled.div`
   background-color: ${props => props.theme.colors.background};
   color: ${props => props.theme.colors.text};
   min-height: 100vh;
   font-family: ${props => props.theme.fonts.main};
-`;
-
-const ContentContainer = styled.div`
-  padding: ${props => props.theme.spacing.large};
-`;
-
-const SectionTitle = styled.h2`
-  color: ${props => props.theme.colors.text};
-  margin-bottom: ${props => props.theme.spacing.large};
-`;
-
-const CampaignGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: ${props => props.theme.spacing.large};
-`;
-
-const CampaignCardWrapper = styled.div`
-  background-color: ${props => props.theme.colors.secondaryBackground};
-  border-radius: ${props => props.theme.borderRadius.medium};
-  padding: ${props => props.theme.spacing.large};
-  &:hover {
-    transform: scale(1.02);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  }
-`;
-
-const CampaignTitle = styled.h3`
-  color: ${props => props.theme.colors.text};
-  margin-bottom: ${props => props.theme.spacing.small};
-`;
-
-const CampaignDescription = styled.p`
-  color: ${props => props.theme.colors.secondaryText};
-  margin-bottom: ${props => props.theme.spacing.small};
-`;
-
-const ProgressBar = styled.div`
-  background-color: ${props => props.theme.colors.progressBackground};
-  border-radius: ${props => props.theme.borderRadius.small};
-  height: 8px;
-  margin-bottom: ${props => props.theme.spacing.small};
-  overflow: hidden;
-`;
-
-const Progress = styled.div`
-  background-color: ${props => props.theme.colors.primary};
-  height: 100%;
-  width: ${props => props.width}%;
-`;
-
-const CampaignInfo = styled.div`
-  color: ${props => props.theme.colors.secondaryText};
-  font-size: 0.9em;
-`;
-
-const DonateButton = styled.button`
-  margin-top: ${props => props.theme.spacing.small};
-  padding: ${props => props.theme.spacing.small} ${props => props.theme.spacing.medium};
-  background-color: ${props => props.theme.colors.primary};
-  color: ${props => props.theme.colors.text};
-  border: none;
-  border-radius: ${props => props.theme.borderRadius.small};
-  cursor: pointer;
-  &:hover {
-    background-color: ${props => props.theme.colors.primaryHover};
-  }
 `;
 
 const Modal = styled.div`
@@ -95,68 +33,70 @@ const Modal = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
+  z-index: 1000;
 `;
 
 const ModalContent = styled.div`
-  background-color: ${props => props.theme.colors.background};
-  padding: ${props => props.theme.spacing.large};
-  border-radius: ${props => props.theme.borderRadius.medium};
+  background-color: white;
+  padding: 20px;
+  border-radius: 10px;
   width: 300px;
 `;
 
 const Input = styled.input`
   width: 100%;
-  padding: ${props => props.theme.spacing.small};
-  margin-bottom: ${props => props.theme.spacing.medium};
+  padding: 10px;
+  margin: 10px 0;
+`;
+
+const DonateButton = styled.button`
+  background-color: #4CAF50;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin: 5px;
 `;
 
 export default function App() {
   const [campaigns, setCampaigns] = useState([]);
   const [web3, setWeb3] = useState(null);
   const [contract, setContract] = useState(null);
-  const [account, setAccount] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [selectedCampaign, setSelectedCampaign] = useState(null);
   const [donationAmount, setDonationAmount] = useState('');
 
   useEffect(() => {
-    const initWeb3 = async () => {
-      if (window.ethereum) {
-        const web3Instance = new Web3(window.ethereum);
-        setWeb3(web3Instance);
-        try {
-          await window.ethereum.request({ method: 'eth_requestAccounts' });
-          const accounts = await web3Instance.eth.getAccounts();
-          setAccount(accounts[0]);
+    const initWeb3AndContract = async () => {
+      const web3Instance = new Web3(new Web3.providers.HttpProvider('https://mainnet.infura.io/v3/YOUR_INFURA_KEY'));
+      setWeb3(web3Instance);
 
-          const contractAddress = '0x60694B2b73B250A6DF1D65873d51EAe79FCaaB91'; // Replace with your contract address
-          const contractInstance = new web3Instance.eth.Contract(contractABI, contractAddress);
-          setContract(contractInstance);
+      const contractAddress = '0xfbfEfD8C66FeaeD1F0207FBa7262855799b0e59e';
+      const contractInstance = new web3Instance.eth.Contract(contractABI, contractAddress);
+      setContract(contractInstance);
 
-          // Fetch active fundraisers from the contract
-          const fundraiserCount = await contractInstance.methods.fundraiserCounter().call();
-          const fetchedCampaigns = [];
-          for (let i = 0; i < fundraiserCount; i++) {
-            const fundraiser = await contractInstance.methods.getFundraiserDetails(i).call();
-            fetchedCampaigns.push({
-              id: i,
-              title: fundraiser.condition,
-              description: fundraiser.description,
-              targetAmount: web3Instance.utils.fromWei(fundraiser.targetAmount, 'ether'),
-              amountRaised: web3Instance.utils.fromWei(fundraiser.amountRaised, 'ether'),
-              completed: fundraiser.completed,
-            });
-          }
-          setCampaigns(fetchedCampaigns);
-        } catch (error) {
-          console.error('Error connecting to contract or fetching campaigns', error);
+      try {
+        const fundraiserCount = await contractInstance.methods.fundraiserCounter().call();
+        const fetchedCampaigns = [];
+        for (let i = 0; i < fundraiserCount; i++) {
+          const fundraiser = await contractInstance.methods.getFundraiserDetails(i).call();
+          fetchedCampaigns.push({
+            id: i,
+            title: fundraiser.condition,
+            description: fundraiser.description,
+            targetAmount: web3Instance.utils.fromWei(fundraiser.targetAmount, 'ether'),
+            amountRaised: web3Instance.utils.fromWei(fundraiser.amountRaised, 'ether'),
+            completed: fundraiser.completed,
+          });
         }
-      } else {
-        console.log('Please install MetaMask');
+        setCampaigns(fetchedCampaigns);
+      } catch (error) {
+        console.error('Error fetching campaigns', error);
       }
     };
 
-    initWeb3();
+    initWeb3AndContract();
   }, []);
 
   const handleDonate = (campaign) => {
@@ -165,22 +105,27 @@ export default function App() {
   };
 
   const handleConfirmDonation = async () => {
-    if (!web3 || !contract || !account || !selectedCampaign) return;
+    if (!web3 || !contract || !selectedCampaign) return;
 
     try {
       const amountInWei = web3.utils.toWei(donationAmount, 'ether');
+      
+      const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+      if (!accounts || accounts.length === 0) {
+        alert('Please connect your wallet first');
+        return;
+      }
+      const account = accounts[0];
 
       console.log('Estimating gas...');
       const gasEstimate = await contract.methods.donateToFundraiser(selectedCampaign.id).estimateGas({
         from: account,
         value: amountInWei
       });
-      console.log('Gas estimate:', gasEstimate.toString());
-
+      
       console.log('Getting gas price...');
       const gasPrice = await web3.eth.getGasPrice();
-      console.log('Gas price:', gasPrice.toString());
-
+      
       const gasLimit = BigInt(gasEstimate) * BigInt(120) / BigInt(100);
 
       console.log('Sending transaction...');
@@ -214,26 +159,13 @@ export default function App() {
       <Router>
         <AppContainer>
           <Navigation />
-          <ContentContainer>
-            <Routes>
-              <Route
-                path="/"
-                element={
-                  <>
-                    <SectionTitle>Active Campaigns</SectionTitle>
-                    <CampaignGrid>
-                      {campaigns.map((campaign, index) => (
-                        <CampaignCard key={index} campaign={campaign} web3={web3} handleDonate={handleDonate} />
-                      ))}
-                    </CampaignGrid>
-                  </>
-                }
-              />
-              <Route path="/about-us" element={<AboutUs />} />
-              <Route path="/dashboard" element={<DashBoard />} />
-              <Route path="/create" element={<CreateFundraiser />} />
-            </Routes>
-          </ContentContainer>
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/campaigns" element={<Layout><ActiveCampaigns campaigns={campaigns} web3={web3} handleDonate={handleDonate} /></Layout>} />
+            <Route path="/about-us" element={<Layout><AboutUs /></Layout>} />
+            <Route path="/dashboard" element={<Layout><DashBoard /></Layout>} />
+            <Route path="/create" element={<Layout><CreateFundraiser /></Layout>} />
+          </Routes>
         </AppContainer>
       </Router>
       {showModal && (
@@ -256,34 +188,3 @@ export default function App() {
     </ThemeProvider>
   );
 }
-
-const CampaignCard = ({ campaign, web3, handleDonate }) => {
-  const calculateProgressPercentage = () => {
-    if (!web3) return 0;
-
-    const amountRaised = BigInt(web3.utils.toWei(campaign.amountRaised, 'ether'));
-    const targetAmount = BigInt(web3.utils.toWei(campaign.targetAmount, 'ether'));
-
-    if (targetAmount === BigInt(0)) return 0;
-
-    const progressPercentage = Number((amountRaised * BigInt(10000)) / targetAmount) / 100;
-    return Math.min(progressPercentage, 100);
-  };
-
-  const progressPercentage = calculateProgressPercentage();
-
-  return (
-    <CampaignCardWrapper>
-      <CampaignTitle>{campaign.title}</CampaignTitle>
-      <CampaignDescription>{campaign.description}</CampaignDescription>
-      <ProgressBar>
-        <Progress width={progressPercentage} />
-      </ProgressBar>
-      <CampaignInfo>{progressPercentage.toFixed(2)}% funded</CampaignInfo>
-      <CampaignInfo>
-        {parseFloat(campaign.amountRaised).toFixed(4)} / {parseFloat(campaign.targetAmount).toFixed(4)} ETH raised
-      </CampaignInfo>
-      {!campaign.completed && <DonateButton onClick={() => handleDonate(campaign)}>Donate</DonateButton>}
-    </CampaignCardWrapper>
-  );
-};

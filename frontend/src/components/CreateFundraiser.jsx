@@ -15,14 +15,14 @@ const PageContainer = styled.div`
 
 const FormContainer = styled.div`
   padding: 24px;
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: #ffffff;
   border-radius: 12px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   margin-bottom: 24px;
 `;
 
 const Title = styled.h1`
-  color: white;
+  color: #1a1a1a;
   margin-bottom: 24px;
   text-align: center;
   font-size: 24px;
@@ -36,7 +36,7 @@ const Form = styled.form`
 `;
 
 const Label = styled.label`
-  color: white;
+  color: #4a4a4a;
   margin-bottom: 8px;
   font-size: 14px;
   font-weight: 500;
@@ -45,9 +45,9 @@ const Label = styled.label`
 const Input = styled.input`
   padding: 12px;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  background-color: rgba(255, 255, 255, 0.1);
-  color: white;
+  border: 1px solid #e0e0e0;
+  background-color: #ffffff;
+  color: #1a1a1a;
   font-size: 14px;
   width: 100%;
   box-sizing: border-box;
@@ -59,16 +59,16 @@ const Input = styled.input`
   }
 
   &::placeholder {
-    color: rgba(255, 255, 255, 0.5);
+    color: #9ca3af;
   }
 `;
 
 const TextArea = styled.textarea`
   padding: 12px;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  background-color: rgba(255, 255, 255, 0.1);
-  color: white;
+  border: 1px solid #e0e0e0;
+  background-color: #ffffff;
+  color: #1a1a1a;
   font-size: 14px;
   width: 100%;
   min-height: 120px;
@@ -82,35 +82,24 @@ const TextArea = styled.textarea`
   }
 
   &::placeholder {
-    color: rgba(255, 255, 255, 0.5);
+    color: #9ca3af;
   }
 `;
 
 const Select = styled.select`
   padding: 12px;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  background-color: rgba(255, 255, 255, 0.1);
-  color: white;
+  border: 1px solid #e0e0e0;
+  background-color: #ffffff;
+  color: #1a1a1a;
   font-size: 14px;
   width: 100%;
   cursor: pointer;
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  background-image: url('data:image/svg+xml;utf8,<svg fill="white" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>');
-  background-repeat: no-repeat;
-  background-position: right 12px top 50%;
 
   &:focus {
     outline: none;
     border-color: #2563eb;
     box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
-  }
-
-  option {
-    background-color: rgba(107, 70, 193, 0.7);
-    color: white;
   }
 `;
 
@@ -148,7 +137,7 @@ const ErrorMessage = styled.p`
   font-size: 14px;
   margin-top: 8px;
   padding: 8px;
-  background-color: rgba(220, 38, 38, 0.1);
+  background-color: #fee2e2;
   border-radius: 6px;
 `;
 
@@ -158,29 +147,21 @@ const SuccessMessage = styled.p`
   font-size: 14px;
   margin-top: 8px;
   padding: 8px;
-  background-color: rgba(5, 150, 105, 0.1);
+  background-color: #d1fae5;
   border-radius: 6px;
 `;
 
 const WalletMessage = styled.div`
   text-align: center;
   padding: 24px;
-  background-color: rgba(243, 244, 246, 0.1);
+  background-color: #f3f4f6;
   border-radius: 12px;
   margin: 24px 0;
-  color: white;
+  color: #4b5563;
   font-size: 16px;
 `;
 
 export default function CreateFundraiser() {
-  const [web3, setWeb3] = useState(null);
-  const [contract, setContract] = useState(null);
-  const [account, setAccount] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const navigate = useNavigate();
-
   const [userData, setUserData] = useState({
     userType: '',
     condition: '',
@@ -192,81 +173,139 @@ export default function CreateFundraiser() {
     description: '',
   });
 
+  const [web3, setWeb3] = useState(null);
+  const [contract, setContract] = useState(null);
+  const [account, setAccount] = useState(null);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
   useEffect(() => {
-    const initWeb3 = async () => {
-      if (window.ethereum) {
+    const checkConnection = async () => {
+      if (window.ethereum && window.ethereum.selectedAddress) {
         const web3Instance = new Web3(window.ethereum);
         setWeb3(web3Instance);
-
+        
         try {
-          await window.ethereum.request({ method: 'eth_requestAccounts' });
           const accounts = await web3Instance.eth.getAccounts();
           setAccount(accounts[0]);
-
-          const contractAddress = '0xfbfEfD8C66FeaeD1F0207FBa7262855799b0e59e';
+          const contractAddress = '0xfbfEfD8C66FeaeD1F0207FBa7262855799b0e59e'; // Ensure this is the correct address
           const contractInstance = new web3Instance.eth.Contract(contractABI, contractAddress);
           setContract(contractInstance);
         } catch (error) {
-          console.error('Error connecting to wallet:', error);
+          console.error("Contract initialization error:", error);
+          setError("Failed to initialize contract. Please check your connection.");
         }
-      } else {
-        console.log('Please install MetaMask!');
       }
     };
 
-    initWeb3();
+    checkConnection();
+
+    if (window.ethereum) {
+      window.ethereum.on('accountsChanged', (accounts) => {
+        if (accounts.length > 0) {
+          setAccount(accounts[0]);
+        } else {
+          setAccount(null);
+          setWeb3(null);
+          setContract(null);
+        }
+      });
+
+      window.ethereum.on('chainChanged', () => {
+        window.location.reload();
+      });
+    }
+
+    return () => {
+      if (window.ethereum) {
+        window.ethereum.removeAllListeners('accountsChanged');
+        window.ethereum.removeAllListeners('chainChanged');
+      }
+    };
   }, []);
 
   const handleUserDataChange = (e) => {
-    setUserData({ ...userData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setUserData(prevData => ({ ...prevData, [name]: value }));
   };
 
   const handleFundraiserDataChange = (e) => {
-    setFundraiserData({ ...fundraiserData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFundraiserData(prevData => ({ ...prevData, [name]: value }));
+  };
+
+  const checkWalletConnection = () => {
+    if (!account) {
+      setError('Please connect your wallet first using the connect button in the navbar.');
+      return false;
+    }
+    return true;
   };
 
   const handleUserRegistration = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
     setError('');
     setSuccess('');
+    setIsLoading(true);
 
+    if (!checkWalletConnection()) {
+      setIsLoading(false);
+      return;
+    }
+  
     try {
-      if (!contract || !account) {
-        throw new Error('Contract or account not initialized');
+      const userType = parseInt(userData.userType);
+  
+      if (userType === 0) {
+        const result = await contract.methods.registerPatient(
+          userData.condition,
+          userData.hospitalAddress
+        ).send({ 
+          from: account,
+          gas: 300000 
+        });
+        console.log('Patient registration result:', result);
+      } else if (userType === 1) {
+        const result = await contract.methods.registerDonor().send({ 
+          from: account,
+          gas: 300000 
+        });
+        console.log('Donor registration result:', result);
+      } else {
+        setError('Invalid user type selected.');
+        setIsLoading(false);
+        return;
       }
-
-      if (userData.userType === '0') {
-        await contract.methods.registerPatient(userData.condition, userData.hospitalAddress).send({ from: account });
-      } else if (userData.userType === '1') {
-        await contract.methods.registerDonor().send({ from: account });
-      }
-
+  
       setSuccess('User registered successfully!');
       setUserData({ userType: '', condition: '', hospitalAddress: '' });
     } catch (error) {
-      console.error('Error registering user:', error);
-      setError(`Failed to register user: ${error.message}`);
+      console.error('Registration error:', error);
+      setError(`Transaction failed: ${error.message}`);
     }
     setIsLoading(false);
   };
 
   const handleFundraiserSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
     setError('');
     setSuccess('');
+    setIsLoading(true);
+
+    if (!checkWalletConnection()) {
+      setIsLoading(false);
+      return;
+    }
 
     try {
-      if (!contract || !account) {
-        throw new Error('Contract or account not initialized');
-      }
-
       const targetAmount = web3.utils.toWei(fundraiserData.targetAmount, 'ether');
       const hospitalAddress = userData.hospitalAddress;
 
-      if (!web3.utils.isAddress(hospitalAddress)) {
-        throw new Error('Invalid hospital address');
+      if (!hospitalAddress || !web3.utils.isAddress(hospitalAddress)) {
+        setError('Valid hospital address is required.');
+        setIsLoading(false);
+        return;
       }
 
       await contract.methods.createFundraiser(
@@ -289,7 +328,7 @@ export default function CreateFundraiser() {
       <PageContainer>
         <WalletMessage>
           <h2>Wallet Connection Required</h2>
-          <p>Please connect your wallet using the connect button in the navbar to access this feature.</p>
+          <p>Please connect your wallet using the connect button on the navbar to access this feature.</p>
         </WalletMessage>
       </PageContainer>
     );

@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useQuery, gql } from '@apollo/client';
-import Web3 from 'web3';
+import { ethers } from 'ethers';
 import { Button } from './ui/Button';
 import { LuLogIn } from "react-icons/lu";
 import { WalletConnected } from "../utils/WalletConnected";
-import { useWalletInfo, useWeb3Modal, useWeb3ModalAccount } from "@web3modal/ethers/react";
+import { useWeb3Modal, useWeb3ModalAccount, useWeb3ModalProvider } from "@web3modal/ethers/react";
 import styled from 'styled-components';
 
+// Styled Components
 const DashboardContainer = styled.div`
   color: white;
   margin: 0;
@@ -31,99 +32,153 @@ const CardContent = ({ children, className = "" }) => (
   </div>
 );
 
-const GET_USER_DATA = gql`
-  query GetUserData($userAddress: Bytes!) {
-    user(id: $userAddress) {
-      id
-      userType
-      condition
-      hospital {
-        id
-        totalFundraisersProcessed
-        totalAmountRaised
-      }
-      fundraisers {
-        id
-        targetAmount
-        amountRaised
-        condition
-        description
-        completed
+// GraphQL Schema Debug Query
+const GET_SCHEMA = gql`
+  query {
+    __schema {
+      queryType {
+        fields {
+          name
+          description
+        }
       }
     }
   }
 `;
 
+// Main User Data Query
+const GET_USER_DATA = gql`
+  query GetAccountData($accountId: String!) {
+    fundraisers(where: { creator: $accountId }) {
+      id
+      creator
+      title
+      description
+      targetAmount
+      amountRaised
+      condition
+      status
+      timestamp
+    }
+    donors(where: { id: $accountId }) {
+      id
+      totalDonations
+      donationsCount
+    }
+    hospitals(where: { id: $accountId }) {
+      id
+      name
+      totalFundraisersProcessed
+      totalAmountRaised
+    }
+  }
+`;
+
 const Dashboard = () => {
-  const [account, setAccount] = useState(null);
-  const [web3, setWeb3] = useState(null);
+  const { open } = useWeb3Modal();
+  const { address, isConnected } = useWeb3ModalAccount();
+  const { walletProvider } = useWeb3ModalProvider();
 
-  const { open } = useWeb3Modal()
-  const { address, isConnected } = useWeb3ModalAccount()
-  const { walletInfo } = useWalletInfo()
+  // Query for debugging schema
+  const { data: schemaData, loading: schemaLoading, error: schemaError } = useQuery(GET_SCHEMA);
 
-  const { loading, error, data } = useQuery(GET_USER_DATA, {
-    variables: { userAddress: account?.toLowerCase() },
-    skip: !account,
+  // Main data query
+  const { loading, error, data, refetch } = useQuery(GET_USER_DATA, {
+    variables: { accountId: address?.toLowerCase() },
+    skip: !address,
   });
 
-  useEffect(() => {
-    const initWeb3 = async () => {
-      if (window.ethereum) {
-        const web3Instance = new Web3(window.ethereum);
-        setWeb3(web3Instance);
-        const accounts = await web3Instance.eth.getAccounts();
-        if (accounts.length > 0) {
-          setAccount(accounts[0]);
-        }
-        window.ethereum.on('accountsChanged', (accounts) => {
-          setAccount(accounts[0]);
-        });
-      }
-    };
+  // Refetch data when wallet is connected
+  React.useEffect(() => {
+    if (isConnected && address) {
+      refetch({ accountId: address.toLowerCase() });
+    }
+  }, [isConnected, address, refetch]);
 
-    initWeb3();
-  }, []);
+  const formatEther = (value) => {
+    try {
+      return ethers.formatEther(value.toString());
+    } catch (error) {
+      console.error('Error formatting ether value:', error);
+      return '0';
+    }
+  };
 
-  const renderUserInfo = () => {
-    if (!data?.user) return null;
+  const renderDonorInfo = () => {
+    const donorData = data?.donors?.[0];
+    if (!donorData) return null;
+
     return (
       <Card className="mb-6">
         <CardHeader>
-          <h2 className="text-lg font-semibold text-gray-200">User Information</h2>
+          <h2 className="text-lg font-semibold text-gray-200">Donor Information</h2>
         </CardHeader>
         <CardContent className="space-y-2 text-gray-300">
-          <p><span className="font-medium">User Type:</span> {data.user.userType === '0' ? 'Patient' : 'Donor'}</p>
-          <p><span className="font-medium">Condition:</span> {data.user.condition || 'N/A'}</p>
-          {data.user.hospital && (
-            <div className="space-y-2">
-              <p><span className="font-medium">Associated Hospital:</span> {data.user.hospital.id}</p>
-              <p><span className="font-medium">Total Fundraisers Processed:</span> {data.user.hospital.totalFundraisersProcessed}</p>
-              <p><span className="font-medium">Total Amount Raised:</span> {web3.utils.fromWei(data.user.hospital.totalAmountRaised, 'ether')} ETH</p>
-            </div>
-          )}
+          <p><span className="font-medium">Total Donations:</span> {formatEther(donorData.totalDonations)} ETH</p>
+          <p><span className="font-medium">Number of Donations:</span> {donorData.donationsCount}</p>
+        </CardContent>
+      </Card>
+    );
+  };
+
+  const renderHospitalInfo = () => {
+    const hospitalData = data?.hospitals?.[0];
+    if (!hospitalData) return null;
+
+    return (
+      <Card className="mb-6">
+        <CardHeader>
+          <h2 className="text-lg font-semibold text-gray-200">Hospital Information</h2>
+        </CardHeader>
+        <CardContent className="space-y-2 text-gray-300">
+          <p><span className="font-medium">Hospital Name:</span> {hospitalData.name}</p>
+          <p><span className="font-medium">Total Fundraisers Processed:</span> {hospitalData.totalFundraisersProcessed}</p>
+          <p><span className="font-medium">Total Amount Raised:</span> {formatEther(hospitalData.totalAmountRaised)} ETH</p>
         </CardContent>
       </Card>
     );
   };
 
   const renderFundraisers = () => {
-    if (!data?.user?.fundraisers || data.user.fundraisers.length === 0) return null;
+    if (!data?.fundraisers || data.fundraisers.length === 0) {
+      return (
+        <Card>
+          <CardContent>
+            <p className="text-center text-gray-300">No fundraisers found.</p>
+          </CardContent>
+        </Card>
+      );
+    }
+
     return (
       <Card>
         <CardHeader>
           <h2 className="text-lg font-semibold text-gray-200">Your Fundraisers</h2>
         </CardHeader>
         <CardContent className="space-y-4">
-          {data.user.fundraisers.map((fundraiser, index) => (
+          {data.fundraisers.map((fundraiser, index) => (
             <Card key={fundraiser.id} className="bg-gray-800/30">
               <CardContent className="space-y-2 text-gray-300">
-                <h3 className="font-semibold">Fundraiser {index + 1}</h3>
-                <p><span className="font-medium">Target:</span> {web3.utils.fromWei(fundraiser.targetAmount, 'ether')} ETH</p>
-                <p><span className="font-medium">Raised:</span> {web3.utils.fromWei(fundraiser.amountRaised, 'ether')} ETH</p>
+                <h3 className="font-semibold">{fundraiser.title || `Fundraiser ${index + 1}`}</h3>
+                <p><span className="font-medium">Target:</span> {formatEther(fundraiser.targetAmount)} ETH</p>
+                <p><span className="font-medium">Raised:</span> {formatEther(fundraiser.amountRaised)} ETH</p>
+                <p><span className="font-medium">Progress:</span> {((Number(formatEther(fundraiser.amountRaised)) / Number(formatEther(fundraiser.targetAmount))) * 100).toFixed(2)}%</p>
+                <div className="w-full bg-gray-700 rounded-full h-2.5">
+                  <div 
+                    className="bg-blue-600 h-2.5 rounded-full" 
+                    style={{ 
+                      width: `${Math.min(((Number(formatEther(fundraiser.amountRaised)) / Number(formatEther(fundraiser.targetAmount))) * 100), 100)}%` 
+                    }}
+                  ></div>
+                </div>
                 <p><span className="font-medium">Condition:</span> {fundraiser.condition}</p>
                 <p><span className="font-medium">Description:</span> {fundraiser.description}</p>
-                <p><span className="font-medium">Status:</span> {fundraiser.completed ? 'Completed' : 'Ongoing'}</p>
+                <p><span className="font-medium">Created:</span> {new Date(Number(fundraiser.timestamp) * 1000).toLocaleDateString()}</p>
+                <p><span className="font-medium">Status:</span> 
+                  <span className={`ml-2 px-2 py-1 rounded ${fundraiser.status === 'COMPLETED' ? 'bg-green-600' : 'bg-blue-600'}`}>
+                    {fundraiser.status}
+                  </span>
+                </p>
               </CardContent>
             </Card>
           ))}
@@ -132,36 +187,75 @@ const Dashboard = () => {
     );
   };
 
-  if (loading) return <p className="text-center p-4 text-gray-300">Loading...</p>;
-  if (error) return <div className="text-red-500 p-4">Error: {error.message}</div>;
+  const renderSchemaData = () => {
+    if (schemaLoading) return <p>Loading available queries...</p>;
+    if (schemaError) return <p>Error loading schema: {schemaError.message}</p>;
+
+    const queries = schemaData?.__schema?.queryType?.fields || [];
+    if (queries.length === 0) return <p>No queries found in schema.</p>;
+
+    return (
+      <Card>
+        <CardHeader>
+          <h2 className="text-lg font-semibold text-gray-200">Available Queries</h2>
+        </CardHeader>
+        <CardContent>
+          <ul className="space-y-2 text-gray-300">
+            {queries.map((query) => (
+              <li key={query.name}>
+                <strong>{query.name}:</strong> {query.description || 'No description'}
+              </li>
+            ))}
+          </ul>
+        </CardContent>
+      </Card>
+    );
+  };
+
+  const renderContent = () => {
+    if (loading) {
+      return (
+        <div className="flex justify-center items-center min-h-[200px]">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        </div>
+      );
+    }
+
+    if (error) {
+      return (
+        <div className="text-red-500 p-4 bg-red-100/10 rounded-lg">
+          <p className="font-semibold">Error loading dashboard data:</p>
+          <p>{error.message}</p>
+        </div>
+      );
+    }
+    
+    if (!isConnected) {
+      return (
+        <div className="text-center">
+          <p className="mb-4 text-gray-300">Connect your wallet to access your fundraisers, track donations, and manage your account.</p>
+          <Button onClick={() => open()} className="text-gray-200 text-sm font-barlow px-4 py-2 flex items-center gap-2">
+            <LuLogIn size={20} />
+            Connect Wallet
+          </Button>
+        </div>
+      );
+    }
+
+    return (
+      <>
+        {renderDonorInfo()}
+        {renderHospitalInfo()}
+        {renderFundraisers()}
+        {renderSchemaData()}
+      </>
+    );
+  };
 
   return (
     <DashboardContainer>
-      <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 p-6">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-2xl font-bold mb-6 text-center text-gray-200">Welcome to Your Dashboard</h1>
-          {!account ? (
-            <div className="text-center">
-              <p className="mb-4 text-gray-300">Connect your wallet to access your fundraisers, track donations, and manage your account.</p>
-              <Button onClick={() => open()} className="text-gray-200 text-sm font-barlow px-4 py-2 flex justify-center items-center gap-1 bg-sky-600 hover:bg-emerald-500">
-                {isConnected ? 
-                  <WalletConnected address={address} icon={walletInfo?.icon} /> : 
-                  <>
-                    <span>Connect Wallet</span>
-                    <LuLogIn className="text-lg hidden md:flex" />
-                  </>
-                }
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-6">
-              <p className="text-center text-gray-300">Your account: {account}</p>
-              {renderUserInfo()}
-              {renderFundraisers()}
-            </div>
-          )}
-        </div>
-      </div>
+      <h1 className="text-3xl font-semibold text-gray-100 mb-6">Dashboard</h1>
+      {renderContent()}
     </DashboardContainer>
   );
 };

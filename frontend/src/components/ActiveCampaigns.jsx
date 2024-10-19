@@ -116,7 +116,7 @@ export default function ActiveCampaigns() {
           await window.ethereum.request({ method: 'eth_requestAccounts' });
           const accounts = await web3Instance.eth.getAccounts();
           setAccount(accounts[0]);
-          const contractAddress = '0xfbfefd8c66feaed1f0207fba7262855799b0e59e';
+          const contractAddress = '0xfbfEfD8C66FeaeD1F0207FBa7262855799b0e59e';
           const contractInstance = new web3Instance.eth.Contract(contractABI, contractAddress);
           setContract(contractInstance);
           await fetchActiveCampaigns(contractInstance);

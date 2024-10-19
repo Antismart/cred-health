@@ -1,23 +1,25 @@
 import React from 'react';
-import backgroundImage from '../assets/Landing.png';
+// import backgroundImage from '../assets/Landing.png';
 
 interface LayoutProps {
   children: React.ReactNode;
   fullBackground?: boolean;
+  noOverlay?: boolean;
 }
 
-export default function Layout({ children, fullBackground = false }: LayoutProps) {
+export default function Layout({ children, fullBackground = false, noOverlay = false }: LayoutProps) {
   const baseStyle: React.CSSProperties = {
-    minHeight: 'calc(100vh - 4px)',
+    minHeight: '100vh',
     display: 'flex',
     flexDirection: 'column',
     position: 'relative',
     overflow: 'hidden',
     margin: 0,
-    backgroundImage: `url(${backgroundImage})`,
+    backgroundImage: `url('../assets/Landing.png')`,
     backgroundSize: 'cover',
     backgroundPosition: 'center top',
     backgroundRepeat: 'no-repeat',
+    backgroundAttachment: 'fixed',
   };
 
   const overlayStyle: React.CSSProperties = {
@@ -27,12 +29,13 @@ export default function Layout({ children, fullBackground = false }: LayoutProps
     right: 0,
     bottom: 0,
     backgroundColor: 'rgba(107, 70, 193, 0.7)',
+    display: noOverlay ? 'none' : 'block',
   };
 
   const contentStyle: React.CSSProperties = {
     position: 'relative',
     zIndex: 1,
-    padding: fullBackground ? '0 16px 32px' : '20px',
+    padding: fullBackground ? '0' : '20px',
     flex: 1,
   };
 

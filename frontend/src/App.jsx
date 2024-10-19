@@ -14,7 +14,6 @@ import contractABI from './contracts/abi/med.json';
 import Layout from './layout';
 import ActiveCampaigns from './components/ActiveCampaigns';
 
-// web3 Modal configuration function call
 configWeb3Modal();
 
 const AppContainer = styled.div`
@@ -22,6 +21,42 @@ const AppContainer = styled.div`
   color: ${props => props.theme.colors.text};
   min-height: 100vh;
   font-family: ${props => props.theme.fonts.main};
+`;
+
+const Modal = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+`;
+
+const ModalContent = styled.div`
+  background-color: white;
+  padding: 20px;
+  border-radius: 10px;
+  width: 300px;
+`;
+
+const Input = styled.input`
+  width: 100%;
+  padding: 10px;
+  margin: 10px 0;
+`;
+
+const DonateButton = styled.button`
+  background-color: #4CAF50;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin: 5px;
 `;
 
 export default function App() {
@@ -34,16 +69,14 @@ export default function App() {
 
   useEffect(() => {
     const initWeb3AndContract = async () => {
-      // Initialize read-only Web3 instance for viewing campaigns
       const web3Instance = new Web3(new Web3.providers.HttpProvider('https://mainnet.infura.io/v3/YOUR_INFURA_KEY'));
       setWeb3(web3Instance);
 
-          const contractAddress = '0xfbfEfD8C66FeaeD1F0207FBa7262855799b0e59e'; // Replace with your contract address
-          const contractInstance = new web3Instance.eth.Contract(contractABI, contractAddress);
-          setContract(contractInstance);
+      const contractAddress = '0xfbfEfD8C66FeaeD1F0207FBa7262855799b0e59e';
+      const contractInstance = new web3Instance.eth.Contract(contractABI, contractAddress);
+      setContract(contractInstance);
 
       try {
-        // Fetch active fundraisers from the contract
         const fundraiserCount = await contractInstance.methods.fundraiserCounter().call();
         const fetchedCampaigns = [];
         for (let i = 0; i < fundraiserCount; i++) {
@@ -77,7 +110,6 @@ export default function App() {
     try {
       const amountInWei = web3.utils.toWei(donationAmount, 'ether');
       
-      // Get the connected account from Web3Modal provider
       const accounts = await window.ethereum.request({ method: 'eth_accounts' });
       if (!accounts || accounts.length === 0) {
         alert('Please connect your wallet first');
@@ -128,7 +160,7 @@ export default function App() {
         <AppContainer>
           <Navigation />
           <Routes>
-            <Route path="/" element={<Layout fullBackground><LandingPage /></Layout>} />
+            <Route path="/" element={<LandingPage />} />
             <Route path="/campaigns" element={<Layout><ActiveCampaigns campaigns={campaigns} web3={web3} handleDonate={handleDonate} /></Layout>} />
             <Route path="/about-us" element={<Layout><AboutUs /></Layout>} />
             <Route path="/dashboard" element={<Layout><DashBoard /></Layout>} />

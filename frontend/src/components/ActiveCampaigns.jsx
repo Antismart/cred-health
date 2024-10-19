@@ -140,7 +140,17 @@ export default function ActiveCampaigns() {
 
   useEffect(() => {
     initWeb3AndContract();
-  }, [initWeb3AndContract]);
+
+    // Poll campaigns every 30 seconds
+    const intervalId = setInterval(() => {
+      if (contract) {
+        fetchActiveCampaigns(contract, new Web3(window.ethereum));
+      }
+    }, 30000); // 30 seconds
+
+    // Clean up interval when the component is unmounted
+    return () => clearInterval(intervalId);
+  }, [initWeb3AndContract, contract]);
 
   const fetchActiveCampaigns = async (contractInstance, web3Instance) => {
     try {

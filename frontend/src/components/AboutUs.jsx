@@ -33,7 +33,7 @@ const Title = styled.h1`
 const Subtitle = styled.h2`
   font-size: 1.8rem;
   margin-bottom: ${props => props.theme.spacing.small};
-  color: white;
+  color: #d3d0ff;
 `;
 
 const Paragraph = styled.p`
@@ -58,7 +58,7 @@ const FundraiserCard = styled.div`
 const FundraiserTitle = styled.h3`
   font-size: 1.2rem;
   margin-bottom: ${props => props.theme.spacing.small};
-  color: white;
+  color: #d3d0ff;
 `;
 
 const FundraiserDescription = styled.p`

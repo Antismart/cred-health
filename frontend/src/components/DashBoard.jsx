@@ -5,6 +5,13 @@ import { Button } from './ui/Button';
 import { LuLogIn } from "react-icons/lu";
 import { WalletConnected } from "../utils/WalletConnected";
 import { useWalletInfo, useWeb3Modal, useWeb3ModalAccount } from "@web3modal/ethers/react";
+import styled from 'styled-components';
+
+const DashboardContainer = styled.div`
+  color: white;
+  margin: 0;
+  padding: 20px;
+`;
 
 const Card = ({ children, className = "" }) => (
   <div className={`bg-gray-800/50 rounded-lg border border-gray-700 ${className}`}>
@@ -129,31 +136,33 @@ const Dashboard = () => {
   if (error) return <div className="text-red-500 p-4">Error: {error.message}</div>;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 p-6">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6 text-center text-gray-200">Welcome to Your Dashboard</h1>
-        {!account ? (
-          <div className="text-center">
-            <p className="mb-4 text-gray-300">Connect your wallet to access your fundraisers, track donations, and manage your account.</p>
-            <Button onClick={() => open()} className="text-gray-200 text-sm font-barlow px-4 py-2 flex justify-center items-center gap-1 bg-sky-600 hover:bg-emerald-500">
-              {isConnected ? 
-                <WalletConnected address={address} icon={walletInfo?.icon} /> : 
-                <>
-                  <span>Connect Wallet</span>
-                  <LuLogIn className="text-lg hidden md:flex" />
-                </>
-              }
-            </Button>
-          </div>
-        ) : (
-          <div className="space-y-6">
-            <p className="text-center text-gray-300">Your account: {account}</p>
-            {renderUserInfo()}
-            {renderFundraisers()}
-          </div>
-        )}
+    <DashboardContainer>
+      <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 p-6">
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-2xl font-bold mb-6 text-center text-gray-200">Welcome to Your Dashboard</h1>
+          {!account ? (
+            <div className="text-center">
+              <p className="mb-4 text-gray-300">Connect your wallet to access your fundraisers, track donations, and manage your account.</p>
+              <Button onClick={() => open()} className="text-gray-200 text-sm font-barlow px-4 py-2 flex justify-center items-center gap-1 bg-sky-600 hover:bg-emerald-500">
+                {isConnected ? 
+                  <WalletConnected address={address} icon={walletInfo?.icon} /> : 
+                  <>
+                    <span>Connect Wallet</span>
+                    <LuLogIn className="text-lg hidden md:flex" />
+                  </>
+                }
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              <p className="text-center text-gray-300">Your account: {account}</p>
+              {renderUserInfo()}
+              {renderFundraisers()}
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </DashboardContainer>
   );
 };
 

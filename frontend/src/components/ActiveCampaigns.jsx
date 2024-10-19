@@ -2,21 +2,16 @@ import React, { useState, useEffect } from 'react';
 import Web3 from 'web3';
 import styled from 'styled-components';
 import contractABI from '../contracts/abi/med.json';
-import backgroundImage from '/assets/home.png'; 
 
 const PageContainer = styled.div`
   max-width: 1200px;
   margin: 0 auto;
-  padding: 2rem;
-  min-height: 100vh;
-  background-image: url(${backgroundImage});
-  background-size: cover;
-  background-position: center;
-  background-attachment: fixed;
+  padding: 20px;
+  color: white;
 `;
 
 const ContentWrapper = styled.div`
-  background-color: rgba(255, 255, 255, 0.9);
+  background-color: rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   padding: 2rem;
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
@@ -29,7 +24,7 @@ const CampaignGrid = styled.div`
 `;
 
 const CampaignCard = styled.div`
-  background-color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.2);
   border-radius: 8px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   padding: 1.5rem;
@@ -48,33 +43,33 @@ const CampaignCard = styled.div`
 const CampaignTitle = styled.h3`
   font-size: 1.2rem;
   font-weight: 600;
-  color: #333;
+  color: white;
   margin-bottom: 0.5rem;
 `;
 
 const CampaignDescription = styled.p`
   font-size: 0.9rem;
-  color: #666;
+  color: rgba(255, 255, 255, 0.8);
   margin-bottom: 1rem;
 `;
 
 const ProgressBar = styled.div`
-  background-color: #e0e0e0;
+  background-color: rgba(255, 255, 255, 0.3);
   border-radius: 10px;
   height: 8px;
-  margin-bottom: 0.75rem;
   overflow: hidden;
+  margin-bottom: 0.5rem;
 `;
 
 const Progress = styled.div`
-  background-color: #4caf50;
+  background-color: #4CAF50;
   height: 100%;
-  width: ${(props) => props.width};
+  width: ${props => props.width};
 `;
 
 const CampaignInfo = styled.div`
   font-size: 0.85rem;
-  color: #888;
+  color: rgba(255, 255, 255, 0.7);
   margin-bottom: 1rem;
 `;
 

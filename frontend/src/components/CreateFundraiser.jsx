@@ -11,18 +11,19 @@ const PageContainer = styled.div`
   max-width: 600px;
   margin: 0 auto;
   padding: 20px;
+  color: white;
 `;
 
 const FormContainer = styled.div`
   padding: 24px;
-  background-color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   margin-bottom: 24px;
 `;
 
 const Title = styled.h1`
-  color: #1a1a1a;
+  color: white;
   margin-bottom: 24px;
   text-align: center;
   font-size: 24px;
@@ -36,7 +37,7 @@ const Form = styled.form`
 `;
 
 const Label = styled.label`
-  color: #4a4a4a;
+  color: white;
   margin-bottom: 8px;
   font-size: 14px;
   font-weight: 500;
@@ -45,9 +46,9 @@ const Label = styled.label`
 const Input = styled.input`
   padding: 12px;
   border-radius: 8px;
-  border: 1px solid #e0e0e0;
-  background-color: #ffffff;
-  color: #1a1a1a;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
   font-size: 14px;
   width: 100%;
   box-sizing: border-box;
@@ -59,16 +60,16 @@ const Input = styled.input`
   }
 
   &::placeholder {
-    color: #9ca3af;
+    color: rgba(255, 255, 255, 0.5);
   }
 `;
 
 const TextArea = styled.textarea`
   padding: 12px;
   border-radius: 8px;
-  border: 1px solid #e0e0e0;
-  background-color: #ffffff;
-  color: #1a1a1a;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
   font-size: 14px;
   width: 100%;
   min-height: 120px;
@@ -82,16 +83,16 @@ const TextArea = styled.textarea`
   }
 
   &::placeholder {
-    color: #9ca3af;
+    color: rgba(255, 255, 255, 0.5);
   }
 `;
 
 const Select = styled.select`
   padding: 12px;
   border-radius: 8px;
-  border: 1px solid #e0e0e0;
-  background-color: #ffffff;
-  color: #1a1a1a;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
   font-size: 14px;
   width: 100%;
   cursor: pointer;
@@ -137,7 +138,7 @@ const ErrorMessage = styled.p`
   font-size: 14px;
   margin-top: 8px;
   padding: 8px;
-  background-color: #fee2e2;
+  background-color: rgba(220, 38, 38, 0.1);
   border-radius: 6px;
 `;
 
@@ -147,17 +148,17 @@ const SuccessMessage = styled.p`
   font-size: 14px;
   margin-top: 8px;
   padding: 8px;
-  background-color: #d1fae5;
+  background-color: rgba(5, 150, 105, 0.1);
   border-radius: 6px;
 `;
 
 const WalletMessage = styled.div`
   text-align: center;
   padding: 24px;
-  background-color: #f3f4f6;
+  background-color: rgba(243, 244, 246, 0.1);
   border-radius: 12px;
   margin: 24px 0;
-  color: #4b5563;
+  color: white;
   font-size: 16px;
 `;
 
@@ -189,7 +190,7 @@ export default function CreateFundraiser() {
         try {
           const accounts = await web3Instance.eth.getAccounts();
           setAccount(accounts[0]);
-          const contractAddress = '0xfbfEfD8C66FeaeD1F0207FBa7262855799b0e59e'; // Ensure this is the correct address
+          const contractAddress = '0xfbfEfD8C66FeaeD1F0207FBa7262855799b0e59e';
           const contractInstance = new web3Instance.eth.Contract(contractABI, contractAddress);
           setContract(contractInstance);
         } catch (error) {

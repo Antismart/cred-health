@@ -6,13 +6,13 @@ import Navigation from './components/Navigation';
 import AboutUs from './components/AboutUs';
 import DashBoard from './components/DashBoard';
 import CreateFundraiser from './components/CreateFundraiser';
-import ActiveCampaigns from './components/ActiveCampaigns';
 import LandingPage from './components/LandingPage';
 import { configWeb3Modal } from "./connection";
-
 import theme from './theme';
 import './App.css';
 import contractABI from './contracts/abi/med.json';
+import Layout from './layout';
+import ActiveCampaigns from './components/ActiveCampaigns';
 
 // web3 Modal configuration function call
 configWeb3Modal();
@@ -22,21 +22,6 @@ const AppContainer = styled.div`
   color: ${props => props.theme.colors.text};
   min-height: 100vh;
   font-family: ${props => props.theme.fonts.main};
-`;
-
-const ContentContainer = styled.div`
-  padding: ${props => props.theme.spacing.large};
-`;
-
-const SectionTitle = styled.h2`
-  color: ${props => props.theme.colors.text};
-  margin-bottom: ${props => props.theme.spacing.large};
-`;
-
-const CampaignGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: ${props => props.theme.spacing.large};
 `;
 
 export default function App() {
@@ -142,27 +127,13 @@ export default function App() {
       <Router>
         <AppContainer>
           <Navigation />
-          <ContentContainer>
-            <Routes>
-              <Route path="/" element={<LandingPage />} />
-              <Route
-                path="/campaigns"
-                element={
-                  <>
-                    <SectionTitle>Active Campaigns</SectionTitle>
-                    <CampaignGrid>
-                      {campaigns.map((campaign, index) => (
-                        <CampaignCard key={index} campaign={campaign} web3={web3} handleDonate={handleDonate} />
-                      ))}
-                    </CampaignGrid>
-                  </>
-                }
-              />
-              <Route path="/about-us" element={<AboutUs />} />
-              <Route path="/dashboard" element={<DashBoard />} />
-              <Route path="/create" element={<CreateFundraiser />} />
-            </Routes>
-          </ContentContainer>
+          <Routes>
+            <Route path="/" element={<Layout fullBackground><LandingPage /></Layout>} />
+            <Route path="/campaigns" element={<Layout><ActiveCampaigns campaigns={campaigns} web3={web3} handleDonate={handleDonate} /></Layout>} />
+            <Route path="/about-us" element={<Layout><AboutUs /></Layout>} />
+            <Route path="/dashboard" element={<Layout><DashBoard /></Layout>} />
+            <Route path="/create" element={<Layout><CreateFundraiser /></Layout>} />
+          </Routes>
         </AppContainer>
       </Router>
       {showModal && (
@@ -185,34 +156,3 @@ export default function App() {
     </ThemeProvider>
   );
 }
-
-const CampaignCard = ({ campaign, web3, handleDonate }) => {
-  const calculateProgressPercentage = () => {
-    if (!web3) return 0;
-
-    const amountRaised = BigInt(web3.utils.toWei(campaign.amountRaised, 'ether'));
-    const targetAmount = BigInt(web3.utils.toWei(campaign.targetAmount, 'ether'));
-
-    if (targetAmount === BigInt(0)) return 0;
-
-    const progressPercentage = Number((amountRaised * BigInt(10000)) / targetAmount) / 100;
-    return Math.min(progressPercentage, 100);
-  };
-
-  const progressPercentage = calculateProgressPercentage();
-
-  return (
-    <CampaignCardWrapper>
-      <CampaignTitle>{campaign.title}</CampaignTitle>
-      <CampaignDescription>{campaign.description}</CampaignDescription>
-      <ProgressBar>
-        <Progress width={progressPercentage} />
-      </ProgressBar>
-      <CampaignInfo>{progressPercentage.toFixed(2)}% funded</CampaignInfo>
-      <CampaignInfo>
-        {parseFloat(campaign.amountRaised).toFixed(4)} / {parseFloat(campaign.targetAmount).toFixed(4)} ETH raised
-      </CampaignInfo>
-      {!campaign.completed && <DonateButton onClick={() => handleDonate(campaign)}>Donate</DonateButton>}
-    </CampaignCardWrapper>
-  );
-};

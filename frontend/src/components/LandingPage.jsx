@@ -137,11 +137,11 @@ function LandingPage() {
       }}></div>
 
       {/* Animated Motto Blocks */}
-      {mottos.map((motto, index) => (
+      {/* {mottos.map((motto, index) => (
         <MottoBlock key={index} position={index % 2 === 0 ? 'left' : 'right'}>
           {motto}
         </MottoBlock>
-      ))}
+      ))} */} 
 
       {/* Main Content */}
       <div style={{ 

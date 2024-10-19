@@ -1,17 +1,24 @@
-import React, { useState, useEffect } from 'react';
-import Web3 from 'web3';
+import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
+import { Button } from './ui/Button';
 import contractABI from '../contracts/abi/med.json';
+import backgroundImage from '/assets/home.png';
+import { useWeb3ModalAccount } from "@web3modal/ethers/react";
+import Web3 from 'web3';
 
 const PageContainer = styled.div`
   max-width: 1200px;
   margin: 0 auto;
-  padding: 20px;
-  color: white;
+  padding: 2rem;
+  min-height: 100vh;
+  background-image: url(${backgroundImage});
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
 `;
 
 const ContentWrapper = styled.div`
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.9);
   border-radius: 12px;
   padding: 2rem;
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
@@ -19,121 +26,143 @@ const ContentWrapper = styled.div`
 
 const CampaignGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 1.5rem;
 `;
 
 const CampaignCard = styled.div`
-  background-color: rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  padding: 1.5rem;
+  background-color: #f8f9fa;
+  border-radius: 16px;
+  padding: 2rem;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  aspect-ratio: 1 / 1;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 
   &:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-8px);
+    box-shadow: 0 10px 16px rgba(128, 0, 128, 0.7); /* Purple glow */
   }
 `;
 
 const CampaignTitle = styled.h3`
-  font-size: 1.2rem;
-  font-weight: 600;
-  color: white;
-  margin-bottom: 0.5rem;
-`;
-
-const CampaignDescription = styled.p`
-  font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.8);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #2c3e50;
   margin-bottom: 1rem;
 `;
 
-const ProgressBar = styled.div`
-  background-color: rgba(255, 255, 255, 0.3);
-  border-radius: 10px;
-  height: 8px;
+const ProgressBarContainer = styled.div`
+  background-color: #e0e0e0;
+  border-radius: 12px;
+  height: 10px;
+  width: 100%;
+  margin-bottom: 1rem;
   overflow: hidden;
-  margin-bottom: 0.5rem;
+  position: relative;
 `;
 
 const Progress = styled.div`
-  background-color: #4CAF50;
+  background-color: #9b59b6; /* Purple color */
   height: 100%;
-  width: ${props => props.width};
+  width: ${(props) => (props.width ? `${props.width}%` : '0%')};
+  transition: width 0.3s ease-in-out;
 `;
 
-const CampaignInfo = styled.div`
-  font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.7);
-  margin-bottom: 1rem;
+const CampaignInfo = styled.p`
+  font-size: 1rem;
+  color: #7f8c8d;
+  margin-bottom: 1.5rem;
 `;
 
-const Button = styled.button`
-  padding: 0.5rem 1rem;
-  background-color: #2196f3;
-  color: white;
-  border: none;
-  border-radius: 4px;
+const InputAmount = styled.input`
+  width: 60%;
+  padding: 0.5rem;
+  font-size: 0.9rem;
+  color: #34495e;
+  border: 2px solid #bdc3c7;
+  border-radius: 8px;
+  margin: 1rem 0;
+  display: block;
+  outline: none;
+
+  &:focus {
+    border-color: #9b59b6; /* Purple border on focus */
+  }
+`;
+
+const DonateButton = styled(Button)`
+  background-color: #8e44ad; /* Purple */
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: bold;
+  padding: 0.5rem 1.25rem; /* Smaller padding */
+  border-radius: 30px; /* Make it more rounded */
   cursor: pointer;
-  font-weight: 500;
   transition: background-color 0.3s ease;
-  
+
   &:hover {
-    background-color: #1976d2;
+    background-color: #732d91;
   }
 `;
 
 const ErrorMessage = styled.p`
-  color: #f44336;
+  color: #e74c3c;
   text-align: center;
   font-size: 1rem;
   margin-bottom: 1rem;
 `;
 
 export default function ActiveCampaigns() {
-  const [web3, setWeb3] = useState(null);
-  const [contract, setContract] = useState(null);
-  const [account, setAccount] = useState(null);
   const [campaigns, setCampaigns] = useState([]);
+  const [contract, setContract] = useState(null);
   const [error, setError] = useState('');
+  const [donationAmount, setDonationAmount] = useState('');
+  const [selectedCampaign, setSelectedCampaign] = useState(null);
+  const { address, isConnected } = useWeb3ModalAccount();
+
+  const initWeb3AndContract = useCallback(async () => {
+    if (!isConnected || !address) return;
+
+    try {
+      const provider = new Web3(window.ethereum);
+      const contractAddress = '0xfbfEfD8C66FeaeD1F0207FBa7262855799b0e59e'; 
+      const contractInstance = new provider.eth.Contract(contractABI, contractAddress);
+      setContract(contractInstance);
+
+      await fetchActiveCampaigns(contractInstance, provider);
+    } catch (error) {
+      console.error("Error initializing Web3Modal", error);
+      setError("Failed to connect wallet. Please try again.");
+    }
+  }, [isConnected, address]);
 
   useEffect(() => {
-    const initWeb3 = async () => {
-      if (window.ethereum) {
-        const web3Instance = new Web3(window.ethereum);
-        setWeb3(web3Instance);
-        try {
-          await window.ethereum.request({ method: 'eth_requestAccounts' });
-          const accounts = await web3Instance.eth.getAccounts();
-          setAccount(accounts[0]);
-          const contractAddress = '0xfbfEfD8C66FeaeD1F0207FBa7262855799b0e59e';
-          const contractInstance = new web3Instance.eth.Contract(contractABI, contractAddress);
-          setContract(contractInstance);
-          await fetchActiveCampaigns(contractInstance);
-        } catch (error) {
-          console.error("User denied account access or wrong contract address", error);
-          setError("Failed to connect to Ethereum. Please check your MetaMask connection.");
-        }
-      } else {
-        setError('Please install MetaMask!');
+    initWeb3AndContract();
+
+    // Poll campaigns every 30 seconds
+    const intervalId = setInterval(() => {
+      if (contract) {
+        fetchActiveCampaigns(contract, new Web3(window.ethereum));
       }
-    };
+    }, 30000); // 30 seconds
 
-    initWeb3();
-  }, []);
+    // Clean up interval when the component is unmounted
+    return () => clearInterval(intervalId);
+  }, [initWeb3AndContract, contract]);
 
-  const fetchActiveCampaigns = async (contractInstance) => {
+  const fetchActiveCampaigns = async (contractInstance, web3Instance) => {
     try {
       const fundraiserCounter = await contractInstance.methods.fundraiserCounter().call();
       const campaigns = [];
       for (let i = 0; i < fundraiserCounter; i++) {
         const fundraiser = await contractInstance.methods.getFundraiserDetails(i).call();
-        campaigns.push(fundraiser);
+        campaigns.push({
+          ...fundraiser,
+          amountRaised: web3Instance.utils.fromWei(fundraiser.amountRaised, 'ether'),
+          targetAmount: web3Instance.utils.fromWei(fundraiser.targetAmount, 'ether')
+        });
       }
       setCampaigns(campaigns);
     } catch (error) {
@@ -142,14 +171,23 @@ export default function ActiveCampaigns() {
     }
   };
 
-  const handleDonate = async (fundraiserId) => {
-    if (!web3 || !contract || !account) {
-      setError('Web3 is not initialized. Please check your MetaMask connection.');
+  const handleDonateClick = (campaignId) => {
+    setSelectedCampaign(campaignId);
+  };
+
+  const handleDonate = async () => {
+    if (!contract || !address || selectedCampaign === null) {
+      setError('Web3 is not initialized. Please check your connection.');
       return;
     }
+    if (!donationAmount || isNaN(donationAmount) || donationAmount <= 0) {
+      setError('Please enter a valid donation amount.');
+      return;
+    }
+
     try {
-      const donationAmount = web3.utils.toWei('0.01', 'ether');
-      await contract.methods.donateToFundraiser(fundraiserId).send({ from: account, value: donationAmount });
+      const amountInWei = Web3.utils.toWei(donationAmount, 'ether');
+      await contract.methods.donateToFundraiser(selectedCampaign).send({ from: address, value: amountInWei });
       alert('Donation successful!');
     } catch (error) {
       console.error('Error donating:', error);
@@ -161,25 +199,41 @@ export default function ActiveCampaigns() {
     <PageContainer>
       <ContentWrapper>
         {error && <ErrorMessage>{error}</ErrorMessage>}
-        <CampaignGrid>
-          {campaigns.map((campaign, index) => (
-            <CampaignCard key={index}>
-              <div>
-                <CampaignTitle>{campaign.description}</CampaignTitle>
-                <CampaignDescription>Condition: {campaign.condition}</CampaignDescription>
-                <ProgressBar>
-                  <Progress width={`${(campaign.amountRaised / campaign.targetAmount) * 100}%`} />
-                </ProgressBar>
-                <CampaignInfo>
-                  {web3 && `${web3.utils.fromWei(campaign.amountRaised, 'ether')} ETH raised of ${web3.utils.fromWei(campaign.targetAmount, 'ether')} ETH target`}
-                </CampaignInfo>
-              </div>
-              {!campaign.completed && (
-                <Button onClick={() => handleDonate(index)}>Donate</Button>
-              )}
-            </CampaignCard>
-          ))}
-        </CampaignGrid>
+
+        {isConnected ? (
+          <CampaignGrid>
+            {campaigns.map((campaign, index) => (
+              <CampaignCard key={index}>
+                <div>
+                  <CampaignTitle>{campaign.description}</CampaignTitle>
+                  <ProgressBarContainer>
+                    <Progress width={(campaign.amountRaised / campaign.targetAmount) * 100} />
+                  </ProgressBarContainer>
+                  <CampaignInfo>
+                    {`${campaign.amountRaised} ETH raised of ${campaign.targetAmount} ETH target`}
+                  </CampaignInfo>
+                </div>
+                {!campaign.completed && (
+                  <>
+                    {selectedCampaign === index && (
+                      <InputAmount
+                        type="number"
+                        placeholder="Enter amount to donate"
+                        value={donationAmount}
+                        onChange={(e) => setDonationAmount(e.target.value)}
+                      />
+                    )}
+                    <DonateButton onClick={() => (selectedCampaign === index ? handleDonate() : handleDonateClick(index))}>
+                      {selectedCampaign === index ? 'Confirm Donation' : 'Donate'}
+                    </DonateButton>
+                  </>
+                )}
+              </CampaignCard>
+            ))}
+          </CampaignGrid>
+        ) : (
+          <ErrorMessage>Please connect your wallet to view campaigns.</ErrorMessage>
+        )}
       </ContentWrapper>
     </PageContainer>
   );

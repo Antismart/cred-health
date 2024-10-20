@@ -62,7 +62,7 @@ function LandingPage() {
           left: 0,
           right: 0,
           bottom: 0,
-          backgroundColor: 'rgba(107, 70, 193, 0.7) !important',
+          backgroundColor: 'rgba(107, 70, 193, 0.7)', 
         }}></div>
 
         <div style={{ 

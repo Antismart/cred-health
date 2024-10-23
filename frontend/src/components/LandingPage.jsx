@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import Layout from '../layout';
-import backgroundImage from '/assets/Landing.png';
+// import backgroundImage from '../assets/Landing.png';
 
 const Button = ({ children, primary, to, withAnimation }) => (
   <div style={{ position: 'relative', display: 'inline-block', margin: '10px' }}>
@@ -45,79 +45,74 @@ const AnimatedArrow = () => (
 
 function LandingPage() {
   return (
-    <Layout fullBackground noOverlay>
+    <div style={{ 
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center',
+      minHeight: '100vh',
+      padding: '0 16px 32px',
+      position: 'relative',
+      overflow: 'hidden',
+    }}>
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(107, 70, 193, 0.7)', 
+      }}></div>
+
       <div style={{ 
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        minHeight: '100vh',
-        padding: '0 16px 32px',
         position: 'relative',
-        overflow: 'hidden',
+        zIndex: 3,
+        color: 'white',
+        fontFamily: 'Arial, sans-serif',
+        textAlign: 'center',
+        maxWidth: '800px',
       }}>
-        <div style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(107, 70, 193, 0.7)', 
-        }}></div>
-
-        <div style={{ 
-          position: 'relative',
-          zIndex: 3,
-          color: 'white',
-          fontFamily: 'Arial, sans-serif',
-          textAlign: 'center',
-          maxWidth: '800px',
+        <h1 style={{ 
+          fontSize: '3.5rem', 
+          fontWeight: 'bold', 
+          marginBottom: '20px',
+          textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
         }}>
-          <h1 style={{ 
-            fontSize: '3.5rem', 
-            fontWeight: 'bold', 
-            marginBottom: '20px',
-            textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
-          }}>
-            CrowdHealth: Touching Lives Through The Power Of Community.
-          </h1>
-          <p style={{ 
-            fontSize: '1.4rem', 
-            marginBottom: '48px',
-            maxWidth: '600px',
-            lineHeight: '1.6',
-            textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
-          }}>
-            Join our platform to raise funds for medical treatments, support healthcare initiatives, and make a difference in people's lives.
-          </p>
-          <div>
-            <Button primary to="/create">Start a Campaign</Button>
-            <Button to="/campaigns" withAnimation>Donate Now</Button>
-          </div>
-        </div>
-
-        <div style={{
-          position: 'absolute',
-          bottom: '24px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          textAlign: 'center',
-          zIndex: 3,
+          CrowdHealth: Touching Lives Through The Power Of Community.
+        </h1>
+        <p style={{ 
+          fontSize: '1.4rem', 
+          marginBottom: '48px',
+          maxWidth: '600px',
+          lineHeight: '1.6',
+          textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
         }}>
-          <p style={{ fontSize: '0.9rem', opacity: 0.8 }}>© 2024 CrowdHealth. All rights reserved.</p>
+          Join our platform to raise funds for medical treatments, support healthcare initiatives, and make a difference in people's lives.
+        </p>
+        <div>
+          <Button primary to="/create">Start a Campaign</Button>
+          <Button to="/campaigns" withAnimation>Donate Now</Button>
         </div>
       </div>
-    </Layout>
+
+      <div style={{
+        position: 'absolute',
+        bottom: '24px',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        textAlign: 'center',
+        zIndex: 3,
+      }}>
+        <p style={{ fontSize: '0.9rem', opacity: 0.8 }}>© 2024 CrowdHealth. All rights reserved.</p>
+      </div>
+    </div>
   );
 }
 
 function MobileLandingPage() {
   return (
     <div style={{ 
-      backgroundImage: `url(${backgroundImage})`,
-      backgroundSize: 'cover',
-      backgroundPosition: 'center',
-      backgroundRepeat: 'no-repeat',
+      
       minHeight: '100vh',
       display: 'flex',
       flexDirection: 'column',

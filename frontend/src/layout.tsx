@@ -1,5 +1,5 @@
 import React from 'react';
-// import backgroundImage from '../assets/Landing.png';
+import backgroundImage from './assets/Landing.png';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -7,15 +7,18 @@ interface LayoutProps {
   noOverlay?: boolean;
 }
 
+
+
 export default function Layout({ children, fullBackground = false, noOverlay = false }: LayoutProps) {
   const baseStyle: React.CSSProperties = {
     minHeight: '100vh',
+    height: '100vh',
     display: 'flex',
     flexDirection: 'column',
     position: 'relative',
     overflow: 'hidden',
     margin: 0,
-    backgroundImage: `url('../assets/Landing.png')`,
+    backgroundImage: `url(${backgroundImage})`,
     backgroundSize: 'cover',
     backgroundPosition: 'center top',
     backgroundRepeat: 'no-repeat',

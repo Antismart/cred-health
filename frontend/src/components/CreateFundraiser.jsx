@@ -15,14 +15,14 @@ const PageContainer = styled.div`
 
 const FormContainer = styled.div`
   padding: 24px;
-  background-color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   margin-bottom: 24px;
 `;
 
 const Title = styled.h1`
-  color: #1a1a1a;
+  color: #ffffff;
   margin-bottom: 24px;
   text-align: center;
   font-size: 24px;
@@ -36,7 +36,7 @@ const Form = styled.form`
 `;
 
 const Label = styled.label`
-  color: #4a4a4a;
+  color: #d3d0ff;
   margin-bottom: 8px;
   font-size: 14px;
   font-weight: 500;
@@ -46,7 +46,7 @@ const Input = styled.input`
   padding: 12px;
   border-radius: 8px;
   border: 1px solid #e0e0e0;
-  background-color: #ffffff;
+  background-color: #d3d0ff;
   color: #1a1a1a;
   font-size: 14px;
   width: 100%;

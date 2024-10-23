@@ -3,8 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import Web3 from 'web3';
 import { LuLogIn } from "react-icons/lu";
-import logo from "../../assets/crowdlogo.png";
-import backgroundImage from "../../assets/Landing.png";
+import logo from "../assets/crowdlogo.png";
+import backgroundImage from "../assets/Landing.png";
 import { WalletConnected } from "../utils/WalletConnected";
 
 import { useWalletInfo, useWeb3Modal, useWeb3ModalAccount } from "@web3modal/ethers/react";

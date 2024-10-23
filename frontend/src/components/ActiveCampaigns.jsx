@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import { Button } from './ui/Button';
 import contractABI from '../contracts/abi/med.json';
-import backgroundImage from '/assets/home.png';
+// import backgroundImage from '../assets/home.png';
 import { useWeb3ModalAccount } from "@web3modal/ethers/react";
 import Web3 from 'web3';
 
@@ -11,10 +11,6 @@ const PageContainer = styled.div`
   margin: 0 auto;
   padding: 2rem;
   min-height: 100vh;
-  background-image: url(${backgroundImage});
-  background-size: cover;
-  background-position: center;
-  background-attachment: fixed;
 `;
 
 const ContentWrapper = styled.div`

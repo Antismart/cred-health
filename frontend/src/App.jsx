@@ -160,7 +160,7 @@ export default function App() {
         <AppContainer>
           <Navigation />
           <Routes>
-            <Route path="/" element={<LandingPage />} />
+            <Route path="/" element={<Layout fullBackground noOverlay> <LandingPage /> </Layout>} />
             <Route path="/campaigns" element={<Layout><ActiveCampaigns campaigns={campaigns} web3={web3} handleDonate={handleDonate} /></Layout>} />
             <Route path="/about-us" element={<Layout><AboutUs /></Layout>} />
             <Route path="/dashboard" element={<Layout><DashBoard /></Layout>} />
